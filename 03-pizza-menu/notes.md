@@ -1,6 +1,6 @@
 # Pizza Menu
 
-## Setting Up a Project with Create-React-App
+## `Setting Up a Project with Create-React-App`
 
 Now Create-React-App tool is a command line interface tool.
 In project folder run this command from CMD  
