@@ -156,3 +156,161 @@ _**keeping a user interface in sync with data is really hard and a lot of work**
 _**It also enforce a correct way of structuring and writing code**_
 
 ---
+
+### React_VS_Vanilla-JavaScript
+
+How **React** keeps the UI in sync with the state. let's quickly compare the **advice app** with a **vanilla JavaScript** implementation.
+
+#### WITH VANILLA JAVASCRIPT
+
+```HTML
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+    <title>Vanilla JS Advice</title>
+  </head>
+  <body>
+    <h1 class="advice"></h1>
+    <button class="btn">Get advice</button>
+    <p>You have read <strong class="count"></strong> pieces of advice</p>
+
+    <script>
+      // Manually selecting DOM elements (which require a class or ID in markup)
+      const adviceEl = document.querySelector(".advice");
+      const btnEl = document.querySelector(".btn");
+      const countEl = document.querySelector(".count");
+
+      const getAdvice = async function () {
+        const res = await fetch("https://api.adviceslip.com/advice");
+        const data = await res.json();
+
+        // Updating values
+        advice = data.slip.advice;
+        count = count + 1;
+
+        // Manually updating DOM elements
+        countEl.textContent = count;
+        adviceEl.textContent = advice;
+      };
+
+      // Setting initial values
+      let count = 0;
+      let advice;
+      getAdvice();
+
+      // Attaching an event listener
+      btnEl.addEventListener("click", getAdvice);
+    </script>
+  </body>
+</html>
+
+```
+
+#### WITH_REACT
+
+```JS
+
+import { useEffect, useState } from "react";
+
+export default function App() {
+  const [advice, setAdvice] = useState("");
+  const [count, setCount] = useState(0);
+
+  async function getAdvice() {
+    const res = await fetch("https://api.adviceslip.com/advice");
+    const data = await res.json();
+    setAdvice(data.slip.advice);
+    setCount((c) => c + 1);
+  }
+
+  useEffect(function () {
+    getAdvice();
+  }, []);
+
+  return (
+    <div>
+      <h1>{advice}</h1>
+      <button onClick={getAdvice}>Get advice</button>
+      <Message count={count} />
+    </div>
+  );
+}
+
+function Message(props) {
+  return (
+    <p>
+      You have read <strong>{props.count}</strong> pieces of advice
+    </p>
+  );
+}
+```
+
+#### SOME BIG DIFFERENCES
+
+- In REACT everything is done with JavaScript even the JSX, white is VANILLA JS we have also HTML that includes the JS code.
+- In REACT we not have any class and ids on the tags. and no selection of elements in script tag.
+- In VANILLA-JS we the UI to update the advice and the description not changing on changing the value of state, state means variables which are count and advice(see in html). WHILE... This is a fundamental different
+
+---
+
+### What_Is_REACT
+
+_**REACT is a JAVASCRIPT library for building UI** Official Definition_  
+Let's Extract little bit:  
+_**REACT is extremely popular declarative, component-based, state-driven JAVASCRIPT library for building ULs, created by FACEBOOK**_
+
+1. **COMPONENT-BASED:** REACT is all about components, such as buttons, input fields, search bars and so on... All REACT does is take the components and draw them into a screen. We can reuse the components.
+2. **Declarative:** In order to describe what each component looks like and how it works, we use a special declarative syntax called JSX. Declarative simply means that we tell REACT what a component and ultimately the entire UI should should look like based on the current state. **JSX** is a syntax that combines HTML, CSS and JavaScript as well as referencing other components.
+3. **State-Driven:** If we never touch the DOM then how does REACT update the UL? That's where the concept of state comes to play. _From now on let's call the data state_ Based on our initial state React will render a UI using components that we wrote using JSX. Then based on some events this state might change. **Whenever the state changes, we manually update the state in our app and React will then automatically rerender the UI to reflect the user state.** In other words **REACT reacts to state changes by re-rendering the UI.**  
+4. **Library or Framework??** Short answer is React is actually a library, even though we keep calling it a framework.
+5. **Most popular Framework**
+6. **Created by FACEBOOK:** React was created in 2011 by **Jordan Walke**, an engineer working at Facebook at the time. 2013 -opened source.
+
+SEE PDF FILE THEORY LEC
+
+### Just add some snippets
+
+Snippets are basically predefined code that we use to greatly speed up development.
+
+---
+
+## Quick Look at React's Official Documentation
+
+<https://react.dev/>
+
+**Learn** and **Reference** Tab _most important ones_.  
+
+---
+
+## Setting Up a New React Project The Options
+
+In real world we don't just write REACT Apps in a single JavaScript file, without any tooling.
+
+Let's now learn about the **options** that we have to set up a brand new React project.
+
+The **Two Options** for setting up a REACT Project  
+
+The two most important options are the **Create-React-App** Tool or a Build tool called **Vite**.
+
+1. Create React app is basically a component starter fit for React applications that was developed in order to make it really easy for developers to scaffold new React applications. And what's really nice about this is that all the common development tools are already pre-configured out of the box specifically for React.  
+  So an App created with Create React app automatically comes with a development server, Webpack for module bundling and of course important developer tools which include a linter like Eslint, a code formatter like prettier, a testing library like jest and of course Babel for enabling the latest JavaScript.  
+  Now the problem with create React app is that I used slow and outdated technologies. Therefor right now the recommendation is not to use Create-React-App.  
+  It's perfectly fine way to get started quickly with a new React app for tutorial purposes, or simple experiments. Therefor we will actually use this for most of the course.
+
+2. For real Application VITE is a perfect. It's a modern built tool, like a modern webpack, but which happens to also contains a starter templates for setting up brand new React application. How ever with Vite we will have to manually set up many important developer tools such as Eslint, Prettier...  
+It's **Extremely fast** hot module replacement and bundling.
+
+The REACT team now advises developers to use a so-called React framework like **Next.js** or **Remix** to build new projects.  
+
+---
+
+## Setting Up a Project with Create-React-App
+
+Now Create-React-App tool is a command line interface tool.
+In project folder run this command from CMD  
+**npx create-react-app@5 pizza-menu**
+
+Remaining In lecture 03
