@@ -6,6 +6,10 @@
 2. [Rendering_Root_Component_And_Strict_Mode](#rendering_root_component_and_strict_mode)
 3. [Components](#components)
 4. [Creating_And_Reusing_Component](#creating_and_reusing_component)
+5. [What_Is_JSX](#what_is_jsx)
+6. [Creating_More_Components](#creating_more_components)
+7. [JavaScript_Logic_in_Components](#javascript_logic_in_components)
+8. [Separation_Of_Concerns](#separation_of_concerns)
 
 ## `Setting_A_Project_with_Create-React-App`
 
@@ -127,7 +131,8 @@ function Pizza() {
 
 Now we get Pizza in our UI. That's because we now nested this `Pizza component` inside the `App component`. With nesting we mean basically used or called `Pizza` inside the `App component`.  
 **`NOTICE:` With Nesting we do not mean that we write a function inside the other function. We never should nest the component declaration inside any other, this still works `BUT` it's very bad idea for reasons. Always declare functions in the top level. `So Nesting means call and include one component into another`**  
-*We always put all teh assets in the public folder, because the module bundler(webpack) automatically get them from there. Like this ⤵ path for the image, the bundler will get the image from the public folder.*  
+
+*We always put all the assets in the public folder, because the module bundler(webpack) automatically get them from there. Like this ⤵ path for the image, the bundler will get the image from the public folder.*  
 
 ```js
 function Pizza() {
@@ -141,7 +146,8 @@ function Pizza() {
 }
 ```
 
-**`Reusing This Component`**  
+### `Reusing This Component`
+
 Now let's talk about the idea of reusing this component. For that we call this component several times from the App component. Just like this⤵
 
 ```js
@@ -156,3 +162,184 @@ function App() {
   );
 }
 ```
+
+---
+
+## `What_Is_JSX`
+
+What actually JSX is? And why is it such a big deal in REACT??
+A component is a piece of UI which always contains it's own data, logic and appearance. If a component is a piece of the UI, it means that we must be able to describe exactly what that component looks like. And so that's where JSX comes into play.
+
+**JSX is a declarative syntax that we use to describe what components look like and how they work based on their data and logic.**  
+In practice Each component must **return a block of JSX**, which REACT use to render the component on the UI.
+
+JSX looks like an HTML. In fact JSX is an extension of JavaScript which allows us to combine parts of HTML, CSS and JavaScript all into one block of code. Basically we can write HTML and embed some pieces of JavaScript where necessary, for example to reference some JavaScript variables, even we can reference other REACT components to nest and reuse multiple components.
+
+**If REACT is a JavaScript Framework then how it understand HTML code??**  
+REMEMBER that JSX is just an extension of JavaScript which means that there is a simple way of converting JSX to JavaScript. This is done by a tool called Babel, which included in our application by Create_REACT_App. This conversion is necessary because browsers do not understand JSX. BABEL will convert all the JSX code to many nested React.createElement() function, (to pure REACT), and these function calls will create the html elements on the page. So we could write REACT without JSX, using these createElement() function.  
+
+***JSX is Declarative Syntax!! What that means???`***  
+
+### `IMPERATIVE`
+
+When we try to build UIs using vanilla JavaScript we will by default use an imperative approach. This means that we manually select elements, traverse the DOM and attach event handlers to elements. Then each time something happens in the app, like click, we give the browser a step-by-step instructions on how to mutate those DOM elements until we reach the desired updated UI. So in the imperative approach we basically tell the browser exactly how to do things. However doing these in a complex app is completely unfeasible. That's why Frameworks like React exists.  
+**`Step-by-step DOM mutations until we reach the desired UI.`**
+
+### `DECLARATIVE`
+
+Declarative approach is to simply describe what the UI should look like at all times, always based on the current data that's in the component. And this data is props and state. **So we use JSX to describe the UI based on props and state.** The data that's currently in the component. All that happens without any DOM manipulation at all.  
+REACT is huge abstraction away from the DOM, so we never have to touch the DOM. Instead we think of the UI as a reflection of the current data and let REACT automatically synchronize the UI with that data.
+
+---
+
+## `Creating_More_Components`
+
+Let's create couple of more components to keep building our application.  
+In our application we have three big parts: Header, Main-sec, and Footer. So, let's create one components for each of these three big parts.  
+Just like in JavaScript we could write these components/functions as a function expression or arrow function.
+
+```js
+function Header() {
+  return <h1>Fast React Pizza Co</h1>;
+}
+
+function Menu() {}
+
+function Footer() {}
+```
+
+In Footer instead of immediately returning a JSX, return a createElement call. Just to see how bad it would be to write a components this way without JSX.  
+In createElement first argument will be the element, then props and then child elements.
+
+```js
+function Footer(){
+  return React.createElement('footer', null,"We're currently open" )
+}
+```
+
+Now we'll do exact same thing with JSX, and we'll also add some JavaScript. Remember to go JavaScript mode we open curly brackets.
+
+```js
+function Footer() {
+  return (
+    <footer>{new Date().toLocaleTimeString()} We're currently open</footer>
+  );
+
+}
+```
+
+Finally in menu we'll add h2 element and then our Pizza component.
+
+```js
+function Menu() {
+  return (
+    <div>
+      <h2>Our Menu</h2>
+      <Pizza />
+    </div>
+  );
+}
+```
+
+All of our three main parts are calling from App component. And Pizza is nested into Menu component. Like this we combine smaller components into bigger components.
+
+`Now our APP's code looks like:`
+
+```js
+import React from 'react';
+import ReactDOM from 'react-dom/client';
+
+function App() {
+  return (
+    <div>
+      <Header />
+      <Menu />
+      <Footer />
+    </div>
+  );
+}
+
+function Header() {
+  return <h1>Fast React Pizza Co</h1>;
+}
+
+function Menu() {
+  return (
+    <div>
+      <h2>Our Menu</h2>
+      <Pizza />
+    </div>
+  );
+}
+
+function Footer() {
+  return (
+    <footer>{new Date().toLocaleTimeString()} We're currently open</footer>
+  );
+}
+
+function Pizza() {
+  return (
+    <div>
+      <img src="pizzas/spinaci.jpg" alt="Pizza spinaci"></img>
+      <h2>Pizza Spinaci</h2>
+      <p>Tomato, mozarella, mushrooms, and onion</p>
+    </div>
+  );
+}
+
+const root = ReactDOM.createRoot(document.getElementById('root'));
+// root.render(<App />);
+root.render(
+  <React.StrictMode>
+    {' '}
+    <App />
+  </React.StrictMode>
+);
+
+```
+
+---
+
+## `JavaScript_Logic_in_Components`
+
+Let's write some JavaScript logics in our React app, We already wrote some JavaScript in our app, but we always did it inside JSX. BUT components are just JavaScript functions we can of course do any Javascript in them, and that code will executed as soon as the function is called. So as soon as the component is initialized.
+
+In our app we want to display an alert whether the restaurant is currently open or not. Let's say that the pizza shop opens at 12pm and open close at 10pm. So that 12 and 22.
+  
+```js
+function Footer() {
+  const hour = new Date().getHours();
+  const openHour = 12;
+  const closeHour = 22;
+  const isOpen = hour >= openHour && hour <= closeHour;
+
+  // if (hour >= openHour && hour <= closeHour) {
+  //   alert("We're currently open!");
+  // } else {
+  //   alert("Sorry We're closed!");
+  // }
+
+  return (
+    <footer>{new Date().toLocaleTimeString()} We're currently open</footer>
+  );
+}
+```
+
+Here alert is showing two times, because `In Strict mode our components are usually rendered twice in REACT.`
+
+---
+
+## `Separation_Of_Concerns`
+
+Until this point we have used to describe the appearance of some components and we have used some JavaScript inside of them. And so now we have a tiny bit of experience in writing components, We want to go back to the FACT that JSX combines HTML, CSS and JavaScript into one single block of code.  
+**Why did REACT come up with this idea? Why not just keep HTML, CSS and JavaScript in separate places like we have always done before??**  
+This approach is deeply relevant to understand why REACT was completely designed around components?  
+Let's talk from the very beginning, so from the rise of interactive single page applications, Before single page apps, we always had one file for HTML, one for JavaScript and one for CSS. This is how we first learn web development. **However** as pages got more and more interactive, they become single page applications where the JavaScript started to determine the user interface and the content in general, OR in the other words, JavaScript became more and more in charge of the HTML. If the JavaScript is in charge of the HTML anywhere, so if the logic and the UI are so tightly coupled together then why should we keep them separated in these files and in different code blocks??  The answer to this question is what gave us REACT components and JSX. **So the fact that logic and UI are so tightly coupled together in modern web applications is really the reason why a `REACT` component contains the data, the logic and the appearance of one piece of the UI.** In fact it's the fundamental reason why  `REACT` is all about components. The same is also true for most other modern frameworks.  
+
+REACT has just a different separation of concerns. In traditional way we separate files as per technology, like for HTML, CSS, and JS. But in REACT we separate files as per components with one piece of UI in our Application, like Menu, Filters, Player etc.
+
+*SEE PDF File*  
+*DATE: 07/01/2024  [11:49].*  
+
+---
