@@ -11,6 +11,7 @@
 7. [JavaScript_Logic_in_Components](#javascript_logic_in_components)
 8. [Separation_Of_Concerns](#separation_of_concerns)
 9. [Styling_REACT_Applications](#styling_react_applications)
+10. [Passing_And_Receiving_Props](#passing_and_receiving_props)
 
 ## `Setting_A_Project_with_Create-React-App`
 
@@ -345,7 +346,7 @@ REACT has just a different separation of concerns. In traditional way we separat
 
 ---
 
-## Styling_REACT_Applications
+## `Styling_REACT_Applications`
 
 At this point we know that REACT components can also contain CSS styles. So, let's now learn about some simple ways of applying CSS to REACT applications.  
 In REACT we have many different ways of styling our components and REACT doesn't really care about how we do that. Because REACT is more likely a library then framework, so it doesn't really preferred way of how we should style our components. Therefor we can choose between many different options. We can use `Inline Styling`, `External CSS` or even `SASS Files`, we can use `CSS Modules`, `Styled Components` or even `Tailwind`.
@@ -411,5 +412,92 @@ function Header() {
 Now some styles implied to our application, we're getting these styles from the external CSS style sheet which remember, we simply import here in index.js file,  then Webpack will import the styles into our application.
 
 `NOTICE:` That the styles that we included here are global styles, so they are not scoped to each particular component. Each component doesn't contain it's own styles, but simply uses the global styles, that are in index.css file. This works fine for small apps but we will also use something called styled components then we will have CSS that really only belong to one single component.
+
+---
+
+## Passing_And_Receiving_Props
+
+It's time to introduce yet another fundamental REACT concept, which is **`props`**  
+**Props is essentially how we pass data between components.** And in particular, from parent components to child components. So we can imagine props as being like a communication channel between a parent and a child component. So in practice, what we're going to do is to now customize each of these pizza components that we have. Right have we have all the pizza components with a same data, like same image and text-content. Now with props we'll be able to do that.
+
+Now it's time to pass the data from the parent component which is `Menu` in this case to the child component which is `Pizza` component. We want to pass, image-path, title of pizza, and the ingredients.
+
+**To define props we do it in two steps.**
+
+1. We pass the props into the component.
+2. We receive the props in the component where we passed the component into.
+
+1. `FIRST STEP:`
+    We Pass Just like if they are just a normal attributes.
+
+    ```JS
+    function Menu() {
+
+    return (
+    <main className="menu">
+      <h2>Our Menu</h2>
+      <Pizza
+        name="Pizza Spinaci"
+        ingredients="Tomato, mozarella, spinach, and ricotta cheese"
+        photoName="pizzas/spinaci.jpg"
+        price="100"
+      />
+    </main>
+     );
+    }
+    ```
+
+2. `SECOND STEP:`
+    Receive the props inside a child component so, inside a Pizza component.  
+    The way we do that is to accept a props parameter in the Pizza component just like parameters.
+
+    ```js
+    function Pizza(props) {
+    console.log(props);
+    return (
+      <div>
+      </div>
+      );
+    }
+    ```
+
+    Here props is just an object with all the properties and values that we specified above, when calling Pizza component. Remember there we passed all the data with key-value pair.
+
+    ```js
+    function Menu() {
+    return (
+    <main className="menu">
+      <h2>Our Menu</h2>
+      <Pizza
+        name="Pizza Spinaci"
+        ingredients="Tomato, mozarella, spinach, and ricotta cheese"
+        photoName="pizzas/spinaci.jpg"
+        price="100"
+      />
+
+      <Pizza
+        name="Pizza Funghi"
+        ingredients="Tomato, mushrooms"
+        price="12"
+        photoName="pizzas/funghi.jpg"
+      />
+    </main>
+    );
+    }
+    ```
+
+    For first time we have reused c component with different data.  
+
+    Here see price property: We pass price value also as a number. If we do some operations then it will not work finely, so we have to pass the price as a number. For that we'll enter in JavaScript mode and pass the price value just like this:
+
+    ```jsx
+    <Pizza 
+    price = {10} // Not it's a Number
+    />
+    ```
+
+    In fact we can pass in anything as a prop, It doesn't have to be a sting, or a number,  we can pass in arrays, objects, or ever other react components.
+
+*`Props simply stands for property.`*
 
 ---
