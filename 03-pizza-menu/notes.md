@@ -415,7 +415,7 @@ Now some styles implied to our application, we're getting these styles from the 
 
 ---
 
-## Passing_And_Receiving_Props
+## `Passing_And_Receiving_Props`
 
 It's time to introduce yet another fundamental REACT concept, which is **`props`**  
 **Props is essentially how we pass data between components.** And in particular, from parent components to child components. So we can imagine props as being like a communication channel between a parent and a child component. So in practice, what we're going to do is to now customize each of these pizza components that we have. Right have we have all the pizza components with a same data, like same image and text-content. Now with props we'll be able to do that.
@@ -424,11 +424,9 @@ Now it's time to pass the data from the parent component which is `Menu` in this
 
 **To define props we do it in two steps.**
 
-1. We pass the props into the component.
-2. We receive the props in the component where we passed the component into.
-
 1. `FIRST STEP:`
-    We Pass Just like if they are just a normal attributes.
+    We pass the props into the component.  
+    We Pass Just like if they are a normal attributes.
 
     ```JS
     function Menu() {
@@ -448,6 +446,7 @@ Now it's time to pass the data from the parent component which is `Menu` in this
     ```
 
 2. `SECOND STEP:`
+    We receive the props in the component where we passed the component into.  
     Receive the props inside a child component so, inside a Pizza component.  
     The way we do that is to accept a props parameter in the Pizza component just like parameters.
 
@@ -486,7 +485,7 @@ Now it's time to pass the data from the parent component which is `Menu` in this
     }
     ```
 
-    For first time we have reused c component with different data.  
+    For first time we have reused a component with different data.  
 
     Here see price property: We pass price value also as a number. If we do some operations then it will not work finely, so we have to pass the price as a number. For that we'll enter in JavaScript mode and pass the price value just like this:
 
@@ -499,5 +498,29 @@ Now it's time to pass the data from the parent component which is `Menu` in this
     In fact we can pass in anything as a prop, It doesn't have to be a sting, or a number,  we can pass in arrays, objects, or ever other react components.
 
 *`Props simply stands for property.`*
+
+---
+
+### `Props, Immutability, and One-way Data Flow`
+
+As we just learned, we used props in REACT to pass data from parent components to children components. So essentially to pass information down the component tree. This means that we use props to communicate between parent and child components. Therefor props are an essential REACT tool to configure and also to customize components. So we can imagine props as settings that we can use to make a parent component control how its child should look like and how it should work. So in that regard, props are just like arguments passed to regular JavaScript functions. Also we can pass anything into a JavaScript functions. And the same is actually true for props. We can pass any type of value as a prop. -single value, arrays, objects, functions, even other components, which is a really powerful technique that we will explore a bit later.
+
+**`Let's go dig a little bit deeper.:`**  
+Before we do that we need to first take a step back. At this point we've already learned about the components appearance and its logic, by writing both JSX and JavaScript logic inside components. REMEMBER that, REACT renders a components based on its' current data and that the UI will always be kept in sync with that data. But now it's time to get a bit more specific about **what that data actually is?**  
+This data that REACT uses to render a component is made out of props and state. And actually there are even more types of data. But what matters for now are props and state. `STATE` is basically internal component data that can be updated by the component's logic, so by the component itself. WHILE props on the other hand, is data that is coming from the parent component, so from the outside, So it's the parent component who owns that data. And so therefor it cannot be modified by the child component. Instead props can only be updated by the parent component itself. And this bring us one of the few strict rules that REACT gives us, `which is that props are immutable.` So they cannot be changed by the child components, they are read only.  
+If any point we feel we need to mutate props, actually what we need is state, because state is for data that changes over time as we will learn soon.
+
+**Why props are immutable in REACT?**  
+Props are just an object. Therefor if we change the object in our component we would also affect the parent component because that's just how objects work in JavaScript. So when we copy an object and mutate the copy, the original object will also be mutated. Now if we change an object that's located outside of the component function, that function has then created a so-called side effect. In general a side effect happens whenever we change some data that's located outside of the current function. REACT however is all about pure functions, so functions without side effects. So components have to be pure in terms of their props and state because this allows REACT to optimize application and it avoids some strange bugs that can appear when we manipulate external data. And in fact we can extend this idea of immutability to React development in general. So a component should never mutate any data that we write outside of its function scope.
+
+**REACT uses a so-called one way data flow.** **What does that have to do with props?**  
+In simple terms, one way data flow means that in REACT applications, data can only be passed from parent to child components, which happens by using props. So data can flow from parents to children, but never tha opposite way. Other frameworks such as Angular actually employ a two way data flow. There is a multiple reasons **why REACT uses a one way data flow??**
+
+1. It makes applications way more predictable and way easier to understand for developers.
+2. It makes applications way easier to debug.
+3. Two way data binding is usually less efficient, so it's less performant to implement.
+
+**What if we wanted to pass some data up to a parent component?**  
+There is actually a very clever way to do that. let's talk about that in next section.
 
 ---
