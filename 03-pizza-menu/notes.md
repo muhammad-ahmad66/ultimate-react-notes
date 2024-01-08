@@ -10,6 +10,7 @@
 6. [Creating_More_Components](#creating_more_components)
 7. [JavaScript_Logic_in_Components](#javascript_logic_in_components)
 8. [Separation_Of_Concerns](#separation_of_concerns)
+9. [Styling_REACT_Applications](#styling_react_applications)
 
 ## `Setting_A_Project_with_Create-React-App`
 
@@ -341,5 +342,74 @@ REACT has just a different separation of concerns. In traditional way we separat
 
 *SEE PDF File*  
 *DATE: 07/01/2024  [11:49].*  
+
+---
+
+## Styling_REACT_Applications
+
+At this point we know that REACT components can also contain CSS styles. So, let's now learn about some simple ways of applying CSS to REACT applications.  
+In REACT we have many different ways of styling our components and REACT doesn't really care about how we do that. Because REACT is more likely a library then framework, so it doesn't really preferred way of how we should style our components. Therefor we can choose between many different options. We can use `Inline Styling`, `External CSS` or even `SASS Files`, we can use `CSS Modules`, `Styled Components` or even `Tailwind`.
+
+For now we just want to use some Inline Styles.  
+In HTML, we can actually style elements using the style attribute. However in JSX that's not how it works. **So in JSX we actually need to define inline styles using a JavaScript object.** So first we need to enter JavaScript mode. just like this: ⤵
+
+```js
+function Header() {
+  return (
+    <h1 style={{ color: 'red', fontSize: '36px' }}>
+      Fast React Pizza Co
+    </h1>
+  );
+}
+```
+
+This is most straightforward way to style components in JSX. Simply using the style attribute with an abject as a value. REMEMBER in HTML we use string as a value of style attribute BUT here it's an object. Also in JSX all the property names should be in camelCase notation. Also value of property in object always needs to be a string.
+
+We can also create a variable which store all the styles in an object, and then use as inline style attribute. like this
+
+```js
+function Header() {
+  const style = {
+    color: 'red',
+    fontSize: '48px',
+    textTransform: 'uppercase',
+    fontFamily: 'sans-serif',
+  };
+
+  return <h1 style={style}>Fast React Pizza Co</h1>;
+}
+```
+
+This is the easiest way of styling However when the application gets just a little bit bigger, it can get out of hand and can be a lot of work to write our styles like this ⤴. *NOT RECOMMENDED IN REAL WORLD.*
+
+Now one thing that we can do is to actually include an external CSS files just like we have been doing all the time in our applications. And so that is the easiest way, to style REACT applications, which is basically the same as style normally.  
+In this case we're not really mixing the CSS concerns with the JavaScript and HTML concerns, that's of course not a problem. And also we will learn how to do that a little bit later using something called styled components.
+
+Right now we have a CSS file with the name of index.css, which I wrote for this app. So now we need to add this class names to the JSX elements, so these styles then get applied.
+
+First import that CSS File.
+
+```js
+import './index.css';
+```
+
+Now let's add the classes!!
+
+**In JSX we cannot use class but instead className.** That's because class is already a reserved keyword in JavaScript.
+
+```js
+function Header() {
+
+  return (
+    <header className="header">
+      <h1>Fast React Pizza Co</h1>
+    </header>
+  );
+}
+```
+
+Now some styles implied to our application, we're getting these styles from the external CSS style sheet which remember, we simply import here in index.js file,  then Webpack will import the styles into our application.
+
+`NOTICE:` That the styles that we included here are global styles, so they are not scoped to each particular component. Each component doesn't contain it's own styles, but simply uses the global styles, that are in index.css file. This works fine for small apps but we will also use something called styled components then we will have CSS that really only belong to one single component.
 
 ---
