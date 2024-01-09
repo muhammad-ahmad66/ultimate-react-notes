@@ -12,6 +12,7 @@
 8. [Separation_Of_Concerns](#separation_of_concerns)
 9. [Styling_REACT_Applications](#styling_react_applications)
 10. [Passing_And_Receiving_Props](#passing_and_receiving_props)
+11. [The_Rules_Of_JSX](#the_rules_of_jsx)
 
 ## `Setting_A_Project_with_Create-React-App`
 
@@ -525,6 +526,42 @@ There is actually a very clever way to do that. Will talk about that in next sec
 
 ---
 
-## Challenge_#01
+## `Challenge_#01`
 
 [go-sandbox](https://codesandbox.io/p/sandbox/challenge-1-f6956f?file=%2Fsrc%2Findex.js%3A41%2C11)
+
+---
+
+## `The_Rules_Of_JSX`
+
+Let's quickly check out the rules of how JSX works. There is some **`General rules`** and some rules about how **`JSX is different`** then HTML.
+
+### `General Rules`
+
+- JSX works essentially like HTML, but we can enter **JavaScript mode** by using {} from anywhere in the markup.
+- **Into this JavaScript mode, we can place any JavaScript expression, so anything that produces** a value. We can reference variables, create arrays or objects, we can loop over arrays using the mep method or we can use operators like the ternary operator.
+- BUT **what not allowed are statements.** So in JSX we can not use things like an if/else statement, for loops, a switch or any other statement.
+- What's super important to understand is that **a piece of JSX produces a JavaScript expression.** In other words, a piece of JSX is just like any other JavaScript expression. We already learnt that JSX is simply converted to a **createElement** function call, which is in fact also an expression. Now this fact(JSX produces an expression) has two important implications.
+    1. We can place other pieces of JSX inside the curly braces. So inside the JavaScript mode.
+    2. We can write JSX anywhere inside a component. For example, we can assign a piece of JSX to a variable.
+
+    ```js
+    const el1 = document.createElement('h1', null, 'Hello REACT!');
+    const el2 = <h1>Hello REACT!</h1>
+    // Both are equal and right.
+    ```
+
+- A piece of JSX can only have one root element. So basically one parent element. If we need more than that, for example, to return two elements from a component, we can use something called a `REACT Fragment`, which we'll talk about later.
+
+### `Differences Between JSX and regular HTML`
+
+- **className** instead of class.
+- **htmlFor** instead of HTML's for
+- Every tag needs to **closed**. Example: <img /> or <br />
+- All event handlers or other properties need to be **camelCased**.
+- **Exception:** aria-\* and data-\* are written with dashes like in HTML.
+- CSS inline styles are written like this: **{{<style>}}**
+- CSS property names are also **camelCased**.
+- Comments need to be in **{}** {because they are JS}
+
+---
