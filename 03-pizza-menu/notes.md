@@ -528,7 +528,7 @@ There is actually a very clever way to do that. Will talk about that in next sec
 
 ## `Challenge_#01`
 
-[go-sandbox](https://codesandbox.io/p/sandbox/challenge-1-f6956f?file=%2Fsrc%2Findex.js%3A41%2C11)
+[go-sandbox➡](https://codesandbox.io/p/sandbox/challenge-1-f6956f?file=%2Fsrc%2Findex.js%3A41%2C11)
 
 ---
 
