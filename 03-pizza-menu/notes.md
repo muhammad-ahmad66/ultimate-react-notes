@@ -505,7 +505,7 @@ Now it's time to pass the data from the parent component which is `Menu` in this
 
 As we just learned, we used props in REACT to pass data from parent components to children components. So essentially to pass information down the component tree. This means that we use props to communicate between parent and child components. Therefor props are an essential REACT tool to configure and also to customize components. So we can imagine props as settings that we can use to make a parent component control how its child should look like and how it should work. So in that regard, props are just like arguments passed to regular JavaScript functions. Also we can pass anything into a JavaScript functions. And the same is actually true for props. We can pass any type of value as a prop. -single value, arrays, objects, functions, even other components, which is a really powerful technique that we will explore a bit later.
 
-**`Let's go dig a little bit deeper.:`**  
+**`Let's go dig a little bit deeper:`**  
 Before we do that we need to first take a step back. At this point we've already learned about the components appearance and its logic, by writing both JSX and JavaScript logic inside components. REMEMBER that, REACT renders a components based on its' current data and that the UI will always be kept in sync with that data. But now it's time to get a bit more specific about **what that data actually is?**  
 This data that REACT uses to render a component is made out of props and state. And actually there are even more types of data. But what matters for now are props and state. `STATE` is basically internal component data that can be updated by the component's logic, so by the component itself. WHILE props on the other hand, is data that is coming from the parent component, so from the outside, So it's the parent component who owns that data. And so therefor it cannot be modified by the child component. Instead props can only be updated by the parent component itself. And this bring us one of the few strict rules that REACT gives us, `which is that props are immutable.` So they cannot be changed by the child components, they are read only.  
 If any point we feel we need to mutate props, actually what we need is state, because state is for data that changes over time as we will learn soon.
@@ -521,6 +521,10 @@ In simple terms, one way data flow means that in REACT applications, data can on
 3. Two way data binding is usually less efficient, so it's less performant to implement.
 
 **What if we wanted to pass some data up to a parent component?**  
-There is actually a very clever way to do that. let's talk about that in next section.
+There is actually a very clever way to do that. Will talk about that in next section.
 
 ---
+
+## Challenge_#01
+
+[go-sandbox](https://codesandbox.io/p/sandbox/challenge-1-f6956f?file=%2Fsrc%2Findex.js%3A41%2C11)
