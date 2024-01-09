@@ -13,6 +13,8 @@
 9. [Styling_REACT_Applications](#styling_react_applications)
 10. [Passing_And_Receiving_Props](#passing_and_receiving_props)
 11. [The_Rules_Of_JSX](#the_rules_of_jsx)
+12. [Rendering_List](#rendering_list)
+13. [Conditional_Rendering_With_And_Operator](#conditional_rendering_with_and_operator)
 
 ## `Setting_A_Project_with_Create-React-App`
 
@@ -563,5 +565,162 @@ Let's quickly check out the rules of how JSX works. There is some **`General rul
 - CSS inline styles are written like this: **{{<style>}}**
 - CSS property names are also **camelCased**.
 - Comments need to be in **{}** {because they are JS}
+
+---
+
+## `Rendering_List`
+
+Rendering lists is one of the most common things that we do in basically all REACT applications. We'll probably do it like 100 times throughout this course. And so let's now learn how to render list in REACT.
+
+**What do I mean by rendering lists?**  
+Rendering list is when we have an array and we want to create one component for each element of the array. We usually have an array of objects. like here we have. Here each element of the array is one Pizza. So now we want to render this array elements.  
+We want to take this array and for each of these Pizza objects we want to automatically create one pizza component in UI.  
+
+The beauty of REACT is that for many things, all we need really is the JavaScript knowledge that we already have. For example, for rendering lists, there's nothing new about REACT that we need to learn, All we need is the map method.
+
+```js
+function Menu() {
+  return (
+    <main className="menu">
+      <h2>Our Menu</h2>
+      <div>
+        {pizzaData.map((pizza) => (
+          <Pizza name={pizza.name} photoName={pizza.photoName}/>
+        ))}
+        ;
+      </div>
+    </main>
+  );
+}
+```
+
+We could do just like this ⤴, Usually we do not like this, but we do is to pass in the entire object into the more specific component, that's Pizza in this case, and then inside of that component we would then take the information that we want out of the object. just like this ⤵
+
+```js
+// MAIN COMPONENT (PARENT)
+function Menu() {
+  return (
+    <main className="menu">
+      <h2>Our Menu</h2>
+      <div>
+        {pizzaData.map((pizza) => (
+          <Pizza pizzaObj={pizza} />
+        ))}
+        ;
+      </div>
+    </main>
+  );
+}
+
+// PIZZA COMPONENT (CHILD)
+function Pizza(props) {
+  console.log(props);
+  return (
+    <div className="pizza">
+      <img src={props.pizzaObj.photoName} alt={props.pizzaObj.name}></img>
+      <div>
+        <h3>{props.pizzaObj.name}</h3>
+        <p>{props.pizzaObj.ingredients}</p>
+        <span>{props.pizzaObj.price + 3}</span>
+      </div>
+    </div>
+  );
+}
+```
+
+YEAH it's rendering. But NOTICE here in console we have an error. saying...**Each child in a list should have a unique "key" property.**
+
+```error
+react-jsx-dev-runtime.development.js:87 Warning: Each child in a list should have a unique "key" prop.
+
+Check the render method of `Menu`. See https://reactjs.org/link/warning-keys for more information.
+    at Pizza (http://localhost:3000/static/js/bundle.js:138:18)
+    at Menu
+    at div
+    at App
+```
+
+Basically what this means is that each time we render a list like this with the map method, each of the items that gets rendered needs a unique key property. So, key is basically a prop that is internal to REACT, which it needs in order for some performance optimizations. So pass something here that's unique to each of the items. In this list we have a unique **name** for each item. So name of the pizza is unique in this array. so we use that.
+
+```js
+<ul>
+  {pizzaData.map((pizza) => (
+    <Pizza pizzaObj={pizza} key={pizza.name} />
+  ))};
+</ul>
+```
+
+### `Quick REVIEW`
+
+The goal was to render one pizza element for each of the object that are inside the pizza data array. And the way we do that in REACT is by simply using the map method on this array. **This map method wil create a new array, and in this new array in each position, there will be new pizza component. And into each of these pizza components we pass a a prop the current pizza object.**
+
+---
+
+## `Conditional_Rendering_With_And_Operator`
+
+Another very important technique that we use all the time in REACT development is conditional rendering. So though out the couple of lectures we'll talk about three ways of rendering some JSX or even an entire component based on a conditions. STARTING WITH **AND OPERATOR.**  
+
+We created a variable isOpen way back. Now we want to do is to basically only render something inside the footer if the restaurant is currently open. And so that's what conditional rendering is all about.  
+
+**AND operator** works because of short circuiting. **If there is some truthy value before the AND operator && Then whatever comes after the AND operator will be returned.**
+
+```js
+function Footer() {
+  const hour = new Date().getHours();
+  const openHour = 0;
+  const closeHour = 22;
+  const isOpen = hour >= openHour && hour <= closeHour;
+
+  return (
+    <footer className="footer">
+      {isOpen && (
+        <div className="order">
+          <p>We're open until {closeHour}:00. Come visit us or order online</p>
+          <button className="btn">Order</button>
+        </div>
+      )}
+    </footer>
+  );
+}
+```
+
+`NOTICE:` Here⤴ first we are returning a JSX, and inside that we are entering in the JavaScript mode again, and from there we returning more JSX, which is perfectly fine. Because JSX is just a JavaScript expression.
+
+Now let's check!, We only want to render the Entire Menu in case that we actually have some pizzas.  
+`Remember empty array is a truthy value.` So we check for the length of the array. so if there is no pizza then length will be a zero, and indeed zero is a falsy value. so it will work.
+
+```js
+function Menu() {
+  const pizzas = [];
+  const numPizza = pizzas.length;
+
+  return (
+    <main className="menu">
+      <h2>Our Menu</h2>
+      {numPizza && (
+        <ul className="pizzas">
+          {pizzas.map((pizza) => (
+            <Pizza pizzaObj={pizza} key={pizza.name} />
+          ))}
+          ;
+        </ul>
+      )}
+    </main>
+  );
+}
+```
+
+Working... But we get a zero (0) in UI. **Why is that?**  
+That is because of short-circuiting again. So **when the AND operator short circuits it will simply not evaluate the second part but instead result of the operation will become the left side of && operator.** So as numPizzas, which is length of Pizzas array, is zero therefore that's what we get in the UI. That's not happened in previous example because, as isOpen stores boolean value, and `REACT` will not render true or false value, but it will happily render a zero.  
+
+So as a conclusion, we should never ever have the left side of AND operator a number, We should always try to have true or false values. So we can do here is:
+
+```js
+{numPizzas > 0 && (
+  <ul>...</ul>
+)}
+```
+
+Because of this behavior many people say that we should never use the `AND-OPERATOR` to do conditional rendering. I don't really agree with that, because sometimes it's nice to very quickly do some conditional rendering with this. But I do prefer the `ternary operator` to do conditional rendering.
 
 ---
