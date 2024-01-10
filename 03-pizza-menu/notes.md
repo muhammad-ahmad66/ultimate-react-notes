@@ -17,6 +17,10 @@
 13. [Conditional_Rendering_With_And_Operator](#conditional_rendering_with_and_operator)
 14. [Conditional_Rendering_With_Ternaries](#conditional_rendering_with_ternaries)
 15. [Conditional_Rendering_With_Multiple_Returns](#conditional_rendering_with_multiple_returns)
+16. [Extracting_JSX_Into_New_Component](#extracting_jsx_into_new_component)
+17. [Destructuring_Props](#destructuring_props)
+18. [REACT_Fragments](#react_fragments)
+19. [Setting_Classes_And_Text_Conditionally](#setting_classes_and_text_conditionally)
 
 ## `Setting_A_Project_with_Create-React-App`
 
@@ -807,7 +811,7 @@ Remember for each Pizza we have a soldOut property, so if there a soldOut proper
 
 ```js
 function Pizza(props) {
-  
+
   if (props.pizzaObj.soldOut) return null;
 
   return (
@@ -828,3 +832,118 @@ function Pizza(props) {
 My recommendation is to use the ternary operator whenever we need to return some piece of JSX based on a condition. We can use if statements, so multiple returns, in cases when both block are entirely different or in any block we have null.
 
 ---
+
+## `Extracting_JSX_Into_New_Component`
+
+To practice the concept of components and using props just a little bit more. Let's extract the part of the footer into a new component. So the JSX inside a footer component is getting a little bit too long. So take the some of them into a new component. Props is quite similar to passing arguments into a functions.
+
+```js
+function Footer() {
+  const hour = new Date().getHours();
+  const openHour = 0;
+  const closeHour = 22;
+  const isOpen = hour >= openHour && hour <= closeHour;
+
+  if (!isOpen) {
+    return (
+      <p>
+        We're happy to welcome you between {openHour}:00 and {closeHour}:00.
+      </p>
+    );
+  }
+
+  return (
+    <footer className="footer">
+      {isOpen ? (
+        <Order closeHour={closeHour} />
+      ) : (
+        <p>
+          We're happy to welcome you between {openHour}:00 and {closeHour}:00.
+        </p>
+      )}
+    </footer>
+  );
+}
+
+function Order(props) {
+  return (
+    <div className="order">
+      <p>
+        We're open until {props.closeHour}:00. Come visit us or order online
+      </p>
+      <button className="btn">Order</button>
+    </div>
+  );
+}
+```
+
+---
+
+## `Destructuring_Props`
+
+Now we know what props are, let's make our lives a little bit easier when working with props in practice.  
+Each time that we pass some props into a component, that component will then automatically receive object of props, which will contain all the props that we passed in. **Even in any component we haven't pass any props there always exits an empty props object.**
+
+Here Instead of using props.propertyName again and again for every property, we **destructure** it and just use the property.
+
+```js
+
+// From Menu Component
+<ul className="pizzas">
+          {pizzas.map((pizza) => (
+            <Pizza pizzaObj={pizza} key={pizza.name} />
+          ))}
+          ;
+        </ul>
+
+
+// Pizza Component
+function Pizza({ pizzaObj }) {
+  if (pizzaObj.soldOut) return null;
+
+  return (
+    <li className="pizza">
+      <img src={pizzaObj.photoName} alt={pizzaObj.name}></img>
+      <div>
+        <h3>{pizzaObj.name}</h3>
+        <p>{pizzaObj.ingredients}</p>
+        <span>{pizzaObj.price + 3}</span>
+      </div>
+    </li>
+  );
+}
+
+```
+
+`Remember:` In object destructuring the objectName should be exact same as the property. So here pizzaObj was inside the props.pizzaObj, So In destructuring we should always use pizzaObj.
+
+Here By `destructuring` we have very better conventions that which props this component receiving. Before this we had the generic props for all props.
+
+We can send multiple props and destructure them. **And if we try to destructure a property that doesn't exist, it simply undefined**.
+
+---
+
+## `REACT_Fragments`
+
+Let's now learn what a REACt fragment and when exactly we might need one.
+
+In menu we want a new paragraph. But only when there is a pizza in menu. So we put that after ternary if operator. But after putting that REACT start yelling at us, saying *JSX expression must have one parent element*. So this exactly what we discussed in **JSX_Rules** lecture. So **a piece of JSX can only have in fact one root element**. Before to solve this error, we just wrapped into a div. But here it's mess up our format. We do not want to render one element which contains these two(p & ul), but we really want to render these two elements in separate. So this is the case in which we need **REACT fragment.**
+
+**REACT Fragment** basically let's us group some elements together without leaving any trace in the HTML tree, so in the DOM. For that all we need to do is to wrap the elements inside this⤵.
+
+```js
+<>
+...
+</>
+```
+
+Now sometime we need to add a key to a REACT fragment. For example when we're using it to render a list and so then we need to actually write it in a slightly different way.
+
+```js
+<REACT.Fragment key="anything"></REACT.Fragment>
+```
+
+---
+
+## `Setting_Classes_And_Text_Conditionally`
+
