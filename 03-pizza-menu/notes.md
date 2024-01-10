@@ -15,6 +15,8 @@
 11. [The_Rules_Of_JSX](#the_rules_of_jsx)
 12. [Rendering_List](#rendering_list)
 13. [Conditional_Rendering_With_And_Operator](#conditional_rendering_with_and_operator)
+14. [Conditional_Rendering_With_Ternaries](#conditional_rendering_with_ternaries)
+15. [Conditional_Rendering_With_Multiple_Returns](#conditional_rendering_with_multiple_returns)
 
 ## `Setting_A_Project_with_Create-React-App`
 
@@ -650,7 +652,7 @@ Basically what this means is that each time we render a list like this with the 
 </ul>
 ```
 
-### `Quick REVIEW`
+### `Quick RECAP`
 
 The goal was to render one pizza element for each of the object that are inside the pizza data array. And the way we do that in REACT is by simply using the map method on this array. **This map method wil create a new array, and in this new array in each position, there will be new pizza component. And into each of these pizza components we pass a a prop the current pizza object.**
 
@@ -722,5 +724,107 @@ So as a conclusion, we should never ever have the left side of AND operator a nu
 ```
 
 Because of this behavior many people say that we should never use the `AND-OPERATOR` to do conditional rendering. I don't really agree with that, because sometimes it's nice to very quickly do some conditional rendering with this. But I do prefer the `ternary operator` to do conditional rendering.
+
+---
+
+## `Conditional_Rendering_With_Ternaries`
+
+Let's check out how we do the same thing with the ternary operator, Instead of the And && operator. In ternary operator we have three parts. **1.** Condition. **2.** If conditions true then operation on that case. **3.** Else branch, which is in this case just null.
+
+```js
+function Menu() {
+  const pizzas = pizzaData;
+  const numPizza = pizzas.length;
+
+  return (
+    <main className="menu">
+      <h2>Our Menu</h2>
+      {numPizza > 0 ? (
+        <ul className="pizzas">
+          {pizzas.map((pizza) => (
+            <Pizza pizzaObj={pizza} key={pizza.name} />
+          ))}
+          ;
+        </ul>
+      // ) : null}
+      ) : <p>We're still working on our menu. Please come back later.</p>}
+    </main>
+  );
+}
+```
+
+Now advantage of using the ternary operator is that we can display some alternative. so instead of null let's write some text.  
+
+`REMEMBER:` As as rules of JSX inside the JavaScript mode from JSX we cannot write any JavaScripts. What we need to do is to write something that actually produces a value and if else statement doesn't produce a value.
+
+---
+
+## `Conditional_Rendering_With_Multiple_Returns`
+
+The third way in which we can conditionally render some JSX or some component is by **using multiple returns**. Up until this point, all our components only ever had exactly one return keyword. But we can add more return keyword based on some condition. But of course each component still only return one block of JSX, but that return can depend on a condition.
+
+In component before entering in to the JSX we can use any JavaScript code, like here⤵ we're using if statement... So here we have two return blocks, but these two returns cannot happen at the same time.
+
+So,
+
+```js
+function Footer() {
+  const hour = new Date().getHours();
+  const openHour = 0;
+  const closeHour = 22;
+  const isOpen = hour >= openHour && hour <= closeHour;
+
+  if (!isOpen) {
+    return (
+      <p>
+        We're happy to welcome you between {openHour}:00 and {closeHour}:00.
+      </p>
+    );
+  }
+
+  return (
+    <footer className="footer">
+      {isOpen ? (
+        <div className="order">
+          <p>We're open until {closeHour}:00. Come visit us or order online</p>
+          <button className="btn">Order</button>
+        </div>
+      ) : (
+        <p>
+          We're happy to welcome you between {openHour}:00 and {closeHour}:00.
+        </p>
+      )}
+    </footer>
+  );
+}
+```
+
+Now the problem in this case⤴ is that we are now no longer rendering the footer element around the p tag. If we want to render in exact same way then we want to add footer also in if block. Otherwise the footer is only render if the restaurant is open. In this case we want footer so, we just leaving the ternary operator.
+
+Usually the early return, like we did here is **more useful when we want to render entire components conditionally**. But not just pieces of JSX.
+
+Remember for each Pizza we have a soldOut property, so if there a soldOut property to true, then we'll return early. With this the pizza that is sold out will not appear on the UI.
+
+```js
+function Pizza(props) {
+  
+  if (props.pizzaObj.soldOut) return null;
+
+  return (
+    <li className="pizza">
+      <img src={props.pizzaObj.photoName} alt={props.pizzaObj.name}></img>
+      <div>
+        <h3>{props.pizzaObj.name}</h3>
+        <p>{props.pizzaObj.ingredients}</p>
+        <span>{props.pizzaObj.price + 3}</span>
+      </div>
+    </li>
+  );
+}
+```
+
+### `CONCLUSION ON CONDITIONAL RENDERING`
+
+My recommendation is to use the ternary operator whenever we need to return some piece of JSX based on a condition. We can use if statements, so multiple returns, in cases when both block are entirely different or in any block we have null.
 
 ---
