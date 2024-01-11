@@ -22,6 +22,7 @@
 18. [REACT_Fragments](#react_fragments)
 19. [Setting_Classes_And_Text_Conditionally](#setting_classes_and_text_conditionally)
 20. [OUR_FINAL_CODE](#our_final_code)
+21. [Section_Summary](#section_summary)
 
 ## `Setting_A_Project_with_Create-React-App`
 
@@ -1161,5 +1162,131 @@ root.render(
 - To do this(looping & create list) all we need to know is **JavaScript map() method**
 - **Conditional rendering** is rendering a component/text/elements only when certain condition is true/met.
 - To conditional rendering we use **JavaScript And Operator**, **Ternary Operator** and also use **Multiple returns**.
+
+---
+
+## `Coding_Challenge_#2`
+
+[GO CODE-SAND-BOX](https://codesandbox.io/p/sandbox/components-props-jsx-ch-1-f6956f?file=%2Fsrc%2Findex.js%3A94%2C5)
+
+---
+
+`CODE`
+
+```JS
+import { StrictMode } from "react";
+import { createRoot } from "react-dom/client";
+
+import "./styles.css";
+
+const skills = [
+  {
+    skill: "HTML+CSS",
+    level: "advanced",
+    color: "#2662EA",
+  },
+  {
+    skill: "JavaScript",
+    level: "advanced",
+    color: "#EFD81D",
+  },
+  {
+    skill: "Web Design",
+    level: "advanced",
+    color: "#C3DCAF",
+  },
+  {
+    skill: "Git and GitHub",
+    level: "intermediate",
+    color: "#E84F33",
+  },
+  {
+    skill: "React",
+    level: "advanced",
+    color: "#60DAFB",
+  },
+  {
+    skill: "Svelte",
+    level: "beginner",
+    color: "#FF3B00",
+  },
+];
+
+function App() {
+  return (
+    <div className="card">
+      <Avatar />
+      <div className="data">
+        <Intro />
+        <SkillList />
+      </div>
+    </div>
+  );
+}
+
+function Avatar() {
+  return <img src="avator.jpg" alt="Muhammad Ahmad" className="avatar" />;
+}
+
+function Intro() {
+  return (
+    <div>
+      <h1>Muhammad Ahmad</h1>
+      <p>
+        Lorem ipsum dolor, sit amet consectetur adipisicing elit. Officia
+        repellat delectus recusandae fuga saepe necessitatibus quas numquam sunt
+      </p>
+    </div>
+  );
+}
+
+function SkillList() {
+  return (
+    <div className="skill-list">
+      {/* <Skill skill="HTML" emoji="🤞" color="#ddd" />
+      <Skill skill="CSS" emoji="🙌" color="orangered" />
+      <Skill skill="JavaScript" emoji="😳" color="yellow" />
+      <Skill skill="NodeJs" emoji="🤞" color="red" /> */}
+
+      {skills.map((skill) => (
+        <Skill skillObj={skill} />
+      ))}
+    </div>
+  );
+}
+
+function Skill({ skillObj }) {
+  return (
+    <div className="skill" style={{ backgroundColor: skillObj.color }}>
+      <span>{skillObj.skill}</span>
+      <span>
+        {/* {skillObj.level === "advanced"
+          ? "🔥"
+          : skillObj.level === "intermediate"
+          ? "👍"
+          : "😒"} */}
+
+        {/* Now using AND operator */}
+        {skillObj.level === "advanced" && "🔥"}
+        {skillObj.level === "intermediate" && "👍"}
+        {skillObj.level === "beginner" && "😒"}
+      </span>
+    </div>
+  );
+}
+
+const rootElement = document.getElementById("root");
+const root = createRoot(rootElement);
+
+root.render(
+  <StrictMode>
+    <App />
+  </StrictMode>
+);
+
+```
+
+FINISHED THIS SECTION  
+11/01/2024 9:00 pm PST
 
 ---
