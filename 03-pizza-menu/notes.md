@@ -21,6 +21,7 @@
 17. [Destructuring_Props](#destructuring_props)
 18. [REACT_Fragments](#react_fragments)
 19. [Setting_Classes_And_Text_Conditionally](#setting_classes_and_text_conditionally)
+20. [OUR_FINAL_CODE](#our_final_code)
 
 ## `Setting_A_Project_with_Create-React-App`
 
@@ -929,7 +930,7 @@ Let's now learn what a REACt fragment and when exactly we might need one.
 
 In menu we want a new paragraph. But only when there is a pizza in menu. So we put that after ternary if operator. But after putting that REACT start yelling at us, saying *JSX expression must have one parent element*. So this exactly what we discussed in **JSX_Rules** lecture. So **a piece of JSX can only have in fact one root element**. Before to solve this error, we just wrapped into a div. But here it's mess up our format. We do not want to render one element which contains these two(p & ul), but we really want to render these two elements in separate. So this is the case in which we need **REACT fragment.**
 
-**REACT Fragment** basically let's us group some elements together without leaving any trace in the HTML tree, so in the DOM. For that all we need to do is to wrap the elements inside this⤵.
+**REACT Fragment** basically let us group some elements together without leaving any trace in the HTML tree, so in the DOM. For that all we need to do is to wrap the elements inside this⤵.
 
 ```js
 <>
@@ -947,3 +948,218 @@ Now sometime we need to add a key to a REACT fragment. For example when we're us
 
 ## `Setting_Classes_And_Text_Conditionally`
 
+Let's learn how to conditionally set some text inside elements and also how to conditionally set class names.  
+We want in our project that the sold out Pizza should have some some specific class name.
+
+The difference with what we did before to conditionally rendering is that, there we conditionally render entire element. But now we want here is, we'll render 'Sold Out' if there a soldOut property in place of price.
+
+```jsx
+<span>{pizzaObj.soldOut ? 'Sold out' : pizzaObj.price + 3}</span>
+```
+
+We simply apply conditional rendering on the content of the element, but we could do element itself.
+
+```jsx
+{pizzaObj.soldOut ? (
+<span>Sold Out</span>)
+: (<span>{pizzaObj.price}</span>)}
+```
+
+Result is going to be same, but what we did is fundamentally different.
+
+Now finally we want sold-out class whenever the pizza is sold out.
+
+Now to add `conditional classNames`, instead of regular string we use template literal, to set a value of className attribute. BUT now using template literal is actually a Javascript there for we need to enter javascript mode.
+
+```jsx
+return (
+    <li className={`pizza ${pizzaObj.soldOut ? 'sold-out' : ''}`}>
+    </li>)
+```
+
+---
+
+## `OUR_FINAL_CODE`
+
+```JS
+import React from 'react';
+import ReactDOM from 'react-dom/client';
+import './index.css';
+
+const pizzaData = [
+  {
+    name: 'Focaccia',
+    ingredients: 'Bread with italian olive oil and rosemary',
+    price: 6,
+    photoName: 'pizzas/focaccia.jpg',
+    soldOut: false,
+  },
+  {
+    name: 'Pizza Margherita',
+    ingredients: 'Tomato and mozarella',
+    price: 10,
+    photoName: 'pizzas/margherita.jpg',
+    soldOut: false,
+  },
+  {
+    name: 'Pizza Spinaci',
+    ingredients: 'Tomato, mozarella, spinach, and ricotta cheese',
+    price: 12,
+    photoName: 'pizzas/spinaci.jpg',
+    soldOut: false,
+  },
+  {
+    name: 'Pizza Funghi',
+    ingredients: 'Tomato, mozarella, mushrooms, and onion',
+    price: 12,
+    photoName: 'pizzas/funghi.jpg',
+    soldOut: false,
+  },
+  {
+    name: 'Pizza Salamino',
+    ingredients: 'Tomato, mozarella, and pepperoni',
+    price: 15,
+    photoName: 'pizzas/salamino.jpg',
+    soldOut: true,
+  },
+  {
+    name: 'Pizza Prosciutto',
+    ingredients: 'Tomato, mozarella, ham, aragula, and burrata cheese',
+    price: 18,
+    photoName: 'pizzas/prosciutto.jpg',
+    soldOut: false,
+  },
+];
+
+function App() {
+  return (
+    <div className="container">
+      <Header />
+      <Menu />
+      <Footer />
+    </div>
+  );
+}
+
+function Header() {
+  const style = {};
+
+  return (
+    <header className="header">
+      <h1 style={style}>Fast React Pizza Co</h1>
+    </header>
+  );
+}
+
+function Menu() {
+  const pizzas = pizzaData;
+  // const pizzas = [];
+  const numPizza = pizzas.length;
+
+  return (
+    <main className="menu">
+      <h2>Our Menu</h2>
+
+      {numPizza > 0 ? (
+        <>
+          <p>
+            Authentic Italian cuisine. 6 creative dishes to choose from. All
+            from our stone oven, all organic, all delicious.
+          </p>
+          <ul className="pizzas">
+            {pizzas.map((pizza) => (
+              <Pizza pizzaObj={pizza} key={pizza.name} />
+            ))}
+            ;
+          </ul>
+        </>
+      ) : (
+        // ) : null}
+        <p>We're still working on our menu. Please come back later.</p>
+      )}
+    </main>
+  );
+}
+
+function Pizza({ pizzaObj }) {
+  // if (pizzaObj.soldOut) return null;
+
+  return (
+    <li className={`pizza ${pizzaObj.soldOut ? 'sold-out' : ''}`}>
+      <img src={pizzaObj.photoName} alt={pizzaObj.name}></img>
+      <div>
+        <h3>{pizzaObj.name}</h3>
+        <p>{pizzaObj.ingredients}</p>
+
+        <span>{pizzaObj.soldOut ? 'SOLD OUT' : pizzaObj.price + 3}</span>
+      </div>
+    </li>
+  );
+}
+
+function Footer() {
+  const hour = new Date().getHours();
+  const openHour = 0;
+  const closeHour = 22;
+  const isOpen = hour >= openHour && hour <= closeHour;
+
+  if (!isOpen) {
+    return (
+      <p>
+        We're happy to welcome you between {openHour}:00 and {closeHour}:00.
+      </p>
+    );
+  }
+
+  return (
+    <footer className="footer">
+      {isOpen ? (
+        <Order closeHour={closeHour} />
+      ) : (
+        <p>
+          We're happy to welcome you between {openHour}:00 and {closeHour}:00.
+        </p>
+      )}
+    </footer>
+  );
+}
+
+function Order({ closeHour }) {
+  return (
+    <div className="order">
+      <p>We're open until {closeHour}:00. Come visit us or order online</p>
+      <button className="btn">Order</button>
+    </div>
+  );
+}
+
+const root = ReactDOM.createRoot(document.getElementById('root'));
+// root.render(<App />);
+root.render(
+  <React.StrictMode>
+    {' '}
+    <App />
+  </React.StrictMode>
+);
+
+```
+
+---
+
+## `Section_Summary`
+
+- **Components** are building bocks of any UI in REACT.
+- Each component is **self contained** piece of the UI, which includes it's own data, JS logic, and own appearance.
+- We write this appearance using a declarative syntax that's called **JSX**.
+- This block JSX ultimately gets **returned from each component**.
+- JSX going to describe exactly what the **user see in the UI**.
+- JSX can contain some **HTML markup**, **CSS**, and also some **JavaScript**.
+- **An application usually composed of many different components**, which organized into a **component tree**. In components tree, the top component uses the below components, in other words child components. In our application App component use Header, Menu, and Footer. These three are child components of App. At a same time Menu is a parent component of Pizza components, and the Footer is parent of the Order component.
+- In order to share data between components **parent components can pass data into a direct child component using props**. For each value we want to pass down, we simply define one prop.
+- Props can only be passed down the tree. **parent -> child components**.
+- We usually render multiple components of the same type, by looping over an array. This is what we called **creating a list**.
+- To do this(looping & create list) all we need to know is **JavaScript map() method**
+- **Conditional rendering** is rendering a component/text/elements only when certain condition is true/met.
+- To conditional rendering we use **JavaScript And Operator**, **Ternary Operator** and also use **Multiple returns**.
+
+---
