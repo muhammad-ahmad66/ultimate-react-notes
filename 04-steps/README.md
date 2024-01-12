@@ -301,3 +301,14 @@ export default function App() {
 ```
 
 ---
+
+## `REACT_Developer_Tools`
+
+Since tools are so helpful for developers, the REACT team built dev tools specific for REACT, which can be extremely helpful when working with state.  
+[click-here](https://react.dev/learn/react-developer-tools)  
+
+Once it's installed on chrome, In console we have additional two tabs, Components and Profiler which are coming from the REACT dev tools.
+
+Let's talk about the **components tab**, So components basically as the name says, is for showing a component tree. right now we only have one component which is App component. If we had more, then all of them would be showing up down and we could see our entire component. From there we can take a look at all the state that is inside each component. also we have props, so all the props that the currently selected component receiving, here we're receiving no props. After that we have list of all the hooks, now we have two state hooks. We can manipulate the hooks values to experiment with them. It's very similar to what we can do with CSS values.
+
+---
