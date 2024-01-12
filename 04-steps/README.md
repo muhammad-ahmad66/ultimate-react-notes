@@ -5,6 +5,9 @@
 1. [Start_Build_Steps_Component](#start_build_steps_component)
 2. [Handling_Events_The_REACT_Way](#handling_events_the_react_way)
 3. [What_Is_State](#what_is_state)
+4. [Creating_State_Variable_with_useState](#creating_state_variable_with_usestate)
+5. [Do_Not_Set_State_Manually](#do_not_set_state_manually)
+6. [The_Mechanics_Of_State](#the_mechanics_of_state)
 
 ---
 
@@ -113,5 +116,98 @@ Up until this point we always using the generic term **UI**, but now we are talk
 2. It allows us to persist local variables between multiple renders and re-renders.
 
 ***So in fact it's the most powerful tool that we have in the world of REACT.***
+
+---
+
+## `Creating_State_Variable_with_useState`
+
+In our application we want when we click on next and previous buttons, we want the step(a variable) to change. step is currently set to one, we want this step variable to be dynamic. And for that we need to add a new piece of **state** to our component.
+
+In order to use new **state** in a component, we do it in three steps.
+
+1. We **add a new state** variable.
+2. We **use it in the code** and usually in JSX.
+3. We **update the piece of state** in some event handler.
+
+Let's start with first step, which is to actually create the state variable. We do so by using **useState** function. The argument that we need to specify here is the default value of the state variable. That's in our case step 1. **useState function will returned an array.** Let's check that.
+
+```js
+const arr = useState(1);
+console.log(arr);
+// IN console we've an Array with two values
+
+// LOG  
+Array(2)
+0: 1
+1: ƒ ()
+length: 2
+```
+
+Yeah we have an array of two elements. At the **first index we have the default value** that we specified, and the **second one is a function that we can use to update our state variable.**  
+So what we usually do is to then immediately destructure this array right there. We usually said the function, (set and then variable) setState, here we declared state variable. like this⤵
+
+```js
+const [step, setStep] = useState(1);
+
+```
+
+Now we have done first step here, also we used `state`, so this step variable in the JSX. And so now the third step is to actually update the state in an event handler.
+
+```js
+function handleNext() {
+  if (step < 3) setStep(step + 1);
+}
+```
+
+---
+
+Great, working...
+
+**Just a few more things about the creation of the state variable.**
+
+1. This **useState function is what we called a `hook` in REACT**. We can identify hooks because **they start with use keyword**, *like useState(1);*, So all the REACT functions that start with **use** like useState, useEffect or useReducer are REACT hooks and we'll learn in detail what a REACT hook is a bit later.
+2. But for now what we need to know is that **we can only call hooks like useState on the top level of the function.** Only directly inside of the components, not inside an if statement or inside another function or inside a loop. Here we cannot use hooks in any of these handler functions(handlePrevious/Next).
+3. We should really only update state using that setter function, like here setStep function, not manually.
+
+---
+
+## `Do_Not_Set_State_Manually`
+
+We should only update state using the setter function. Now we'll just see what happens when we try to update state manually. See in code, we have step state variable defined as a const variable. So first change it to let, then to change we put this in handler function. step = step + 1; This would be a perfectly normal way of updating variables in JavaScript. just like this.
+
+```js
+let [step, setStep] = useState(1); // changed to let
+
+
+function handleNext() {
+  // if (step < 3) setStep(step + 1);
+  step++;
+}
+```
+
+But here clicking on Next button nothing happening. We don't get any error from REACT but simply nothing happens.  
+Reason for that is that REACT has no way of knowing that this(step++) is actually trying update the state. So REACT has no magic way of knowing that we are updating the state variable in handleNext handler. That's why REACT provided us the setter function, which is a functional way of updating the state value, but without mutating it, but now we're directly mutating step variable. But REACT is all about immutability. And so therefore we can only update the state using the tools that react gives us. So setter function is actually tied to state variable. ***NEVER DO THIS MISTAKE. ALWAYS USE CONST AND ALWAYS USE THE SETTER FUNCTION.***
+
+Another way in which this could happen, which might be a little bit less obvious, is when we use an object or an array for state.
+
+```js
+const [test] = useState({ name: 'Muhammad' });
+
+test.name = 'Ahmad';
+```
+
+Here we not even use the setter function, but changed the state variable. This works actually, So mutating an object like this did actually trigger a new rerender of the component view. However, mutating objects like this is really, really a **BAD PRACTICE**. That's because sometime in more complex situations, this actually won't work.
+
+***Always treat state as immutable in REACT. So something that we cannot change directly, but we can only change using the tools that REACT gives us. So always use state setter function.***
+
+---
+
+## `The_Mechanics_Of_State`
+
+Let's get a better understanding of how exactly state works in REACT. Let's start from a fundamental REACT principle that we have already discussed earlier. Remember, how we learnt that we do not manipulate the DOM directly when we want to update a component's view, As REACT is declarative, not imperative. And so we never touch the DOM in our code. But this leads us to the question of how do we update the component on the screen whenever some data changes or whenever we need to respond to some event like a click? Now, we already know that the answer to this question is state, but here we're trying o derive it from first principle. So to answer that question we need to understand another fundamental REACT principle, which is the fact that REACT updates a component view by re-rendering that entire component whenever the underlying data changes. So conceptually, we can imagine this as REACT removing the entire view and replacing it with a new one each time a re-render needs to happen [We'll learn exactly what happens later.]. Now react preserves the component state throughout re-renders. Even though a component can be rendered and re-rendered time and time again the stat will not be reset unless the component disappears from the UI entirely, which is what we call **unmounting**.  
+Now speaking of state, it is when state is updated that a component is automatically re-rendered. Let's imagine that there is an eventHandler in the view, for-example on a button that the user can click. So the moment that button is clicked, we can update a piece of state in our component using the set function coming from the useState hook. Then when REACT sees that the state has been changed, it will automatically re-render the component which will result in an updated view of the component.
+
+So the conclusion of all this is that whenever we want to update a component view, we update it's state. And REACT will then react to that update and do its thing. And in fact, this whole mechanism is so fundamental to REACT tht it's actually the reason **why REACT is called REACT**.  
+So on a high lever, moving from the component level to the application level, **REACT reacts to state changes by re-rendering the UI.**
 
 ---
