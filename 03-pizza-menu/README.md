@@ -1,6 +1,6 @@
-# Pizza Menu
+# `Pizza Menu`
 
-## Table of Contents
+## `Table of Contents`
 
 1. [Setting_A_Project_with_Create-React-App](#setting_a_project_with_create-react-app)
 2. [Rendering_Root_Component_And_Strict_Mode](#rendering_root_component_and_strict_mode)
@@ -23,6 +23,8 @@
 19. [Setting_Classes_And_Text_Conditionally](#setting_classes_and_text_conditionally)
 20. [OUR_FINAL_CODE](#our_final_code)
 21. [Section_Summary](#section_summary)
+
+---
 
 ## `Setting_A_Project_with_Create-React-App`
 
