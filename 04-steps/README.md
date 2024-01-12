@@ -8,6 +8,7 @@
 4. [Creating_State_Variable_with_useState](#creating_state_variable_with_usestate)
 5. [Do_Not_Set_State_Manually](#do_not_set_state_manually)
 6. [The_Mechanics_Of_State](#the_mechanics_of_state)
+7. [Adding_Another_Piece_of_state](#adding_another_piece_of_state)
 
 ---
 
@@ -209,5 +210,94 @@ Now speaking of state, it is when state is updated that a component is automatic
 
 So the conclusion of all this is that whenever we want to update a component view, we update it's state. And REACT will then react to that update and do its thing. And in fact, this whole mechanism is so fundamental to REACT tht it's actually the reason **why REACT is called REACT**.  
 So on a high lever, moving from the component level to the application level, **REACT reacts to state changes by re-rendering the UI.**
+
+---
+
+## `Adding_Another_Piece_of_state`
+
+So to practice state a little bit more, let's now implement the open and close functionality for our component.  
+
+```js
+// First Step in the State
+const [isOpen, setIsOpen] = useState(true);
+```
+
+What do we want to achieve with this state variable is whenever it's true, we want the entire component to show, and if it's false we don't want it to show. So what this means is that we need conditional rendering. For conditional rendering first we need to go inside a JavaScript mode, then we use && operator. Remember we couldn't go directly inside the JavaScript mode without using any HTML element, so first we need to wrap up into html element, we used div. With this we finished second step of using state.  
+Now the third part of using state is to actually update the state. So for that we need our button in th top-right corner, so we need some more JSX.  
+After that we need eventHandler, clicking on this button. This time we'll create a function inline, so directly with onClick attribute. so here what should be the isOpen state when clicking on it? well, it should always be the opposite of the current state, we do that by using the not operator. WORKING...  
+
+```JSX
+<button className="close" onClick={() => setIsOpen(!isOpen)}>
+  &times;
+</button>
+```
+
+---
+
+### `Entire Code`
+
+```js
+import { useState } from 'react';
+
+const messages = [
+  'Learn React ⚛️',
+  'Apply for jobs 💼',
+  'Invest your new income 🤑',
+];
+
+export default function App() {
+  const [step, setStep] = useState(1);
+  const [isOpen, setIsOpen] = useState(true);
+
+  // const [test] = useState({ name: 'Muhammad' });
+
+  function handlePrevious() {
+    if (step > 1) setStep(step - 1);
+  }
+
+  function handleNext() {
+    if (step < 3) setStep(step + 1);
+    // test.name = 'Ahmad';
+  }
+
+  return (
+    <>
+      <button className="close" onClick={() => setIsOpen(!isOpen)}>
+        &times;
+      </button>
+
+      {isOpen && (
+        <div className="steps">
+          <div className="numbers">
+            <div className={step >= 1 ? 'active' : ''}>1</div>
+            <div className={step >= 2 ? 'active' : ''}>2</div>
+            <div className={step >= 3 ? 'active' : ''}>3</div>
+          </div>
+
+          <p className="message">
+            Step{step}: {messages[step - 1]}
+          </p>
+
+          <div className="buttons">
+            <button
+              style={{ backgroundColor: '#7950f2', color: '#fff' }}
+              onClick={handlePrevious}
+            >
+              Previous
+            </button>
+            <button
+              style={{ backgroundColor: '#7950f2', color: '#fff' }}
+              onClick={handleNext}
+            >
+              Next
+            </button>
+          </div>
+        </div>
+      )}
+    </>
+  );
+}
+
+```
 
 ---
