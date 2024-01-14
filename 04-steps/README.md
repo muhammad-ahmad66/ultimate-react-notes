@@ -11,6 +11,7 @@
 7. [Adding_Another_Piece_of_state](#adding_another_piece_of_state)
 8. [Updating_State_Based_on_Current_State](#updating_state_based_on_current_state)
 9. [More_Thoughts_About_State__State_Guidelines](#more_thoughts_about_state__state_guidelines)
+10. [Challenge_1](#challenge_1)
 
 ---
 
@@ -373,7 +374,7 @@ Another way of figuring out when we need state is: Whenever we want something in
 
 ## `A_Vanilla_JS_Implementation`
 
-[![code]](public/vanilla.html)
+[Vanilla-JS_Code_For_Step_APP](public/vanilla.html)
 
 ---
 
