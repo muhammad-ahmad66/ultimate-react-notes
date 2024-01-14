@@ -9,6 +9,8 @@
 5. [Do_Not_Set_State_Manually](#do_not_set_state_manually)
 6. [The_Mechanics_Of_State](#the_mechanics_of_state)
 7. [Adding_Another_Piece_of_state](#adding_another_piece_of_state)
+8. [Updating_State_Based_on_Current_State](#updating_state_based_on_current_state)
+9. [More_Thoughts_About_State__State_Guidelines](#more_thoughts_about_state__state_guidelines)
 
 ---
 
@@ -305,10 +307,66 @@ export default function App() {
 ## `REACT_Developer_Tools`
 
 Since tools are so helpful for developers, the REACT team built dev tools specific for REACT, which can be extremely helpful when working with state.  
-[click-here](https://react.dev/learn/react-developer-tools)  
+[get-dev-tool](https://react.dev/learn/react-developer-tools)  
 
 Once it's installed on chrome, In console we have additional two tabs, Components and Profiler which are coming from the REACT dev tools.
 
 Let's talk about the **components tab**, So components basically as the name says, is for showing a component tree. right now we only have one component which is App component. If we had more, then all of them would be showing up down and we could see our entire component. From there we can take a look at all the state that is inside each component. also we have props, so all the props that the currently selected component receiving, here we're receiving no props. After that we have list of all the hooks, now we have two state hooks. We can manipulate the hooks values to experiment with them. It's very similar to what we can do with CSS values.
+
+---
+
+## `Updating_State_Based_on_Current_State`
+
+It's very common that we update a **state** variable based on the current value of that **state**. And so let's now learn how to best do that. And in fact, we are updating **state** based on the current **state** all the time here, for example in setStep setter function we take the current step then add/sub one, also in setIsOpen **state** also by toggling the current value. This is what I mean with updating **state** based on the current **state**. The way we're doing it right now is working just fine. Now **what happen if we call the setter function twice in handleNext function?** like this.⤵ In theory it should be incremented twice with 2 calls. so by first click it should go from step1 to step3. let's check.
+
+```js
+function handleNext() {
+  if (step < 3) {
+    setStep(step + 1);
+    setStep(step + 1);
+    // test.name = 'Ahmad';
+  }
+}
+```
+
+It only updated the **state** once. We'll go into detail why exactly this happens, in coming sections. But for now remember that, we should not update **state** based on the current state like the way we have been doing. Instead what we should do is to pass in a callback function, so instead of value, we pass a function which will receive as the argument the current value of the state.
+
+```js
+function handlePrevious() {
+  if (step > 1) setStep((s) => s - 1);
+}
+
+function handleNext() {
+  if (step < 3) {
+    // setStep(step + 1);
+    // setStep(step + 1);
+    setStep((s) => s + 1);
+    setStep((s) => s + 1);
+  }
+}
+```
+
+Now if we run this again then it works, so it's updating the state twice.
+
+When we're not setting state based on the current state, then of course we can just pass in the value as normal, so without a callback. So in many situations the previous version(without callback) works just fine.
+
+---
+
+## `More_Thoughts_About_State__State_Guidelines`
+
+Now we want to talk about few more important thoughts or ideas about the **state** as well as some practical guidelines.
+
+- **Each component really has and manages it's own state.** So, even if we render the same component multiple times on one page, each of these component instances will operate independently from all the other ones. So if we change the state in one of the components that won't affect the other components at all. So **state really is isolated inside of each component.**
+- If we analyze everything that we just learned about state, we can come to the conclusion that, we can think of the entire application view, so **the entire UI as a function of state**. In other words, the entire UI is always a representation of all the current states in all components.
+- Taking this idea even one step further, **a REACT application is fundamentally all about changing state over time and of course also correctly displaying that state at all times.** And this is really what the declarative approach to building user interfaces is all about. So instead of viewing UI as explicit DOM manipulation with state, we now view a UI as a reflection of data changing over time.
+- We describe that reflection of data using state, event handlers and JSX.
+
+### `Practical guidelines about State`
+
+- **Use a state variable for any data that the component should keep track of over time.** This is data that will change at some point.  
+The easy way of figuring this out is to think of variables that need to change at some point in future. In vanilla JS, that's a **let** variable or an **array** or **object**.  
+Another way of figuring out when we need state is: Whenever we want something in the component to be **dynamic,** create a piece of state related to that thing and then update the state when the thing should change. **Example:** A model window can be open or closed. So we create a state variable isOpen that tracks whether the model is open or not. On isOpen = true, we display the window, on isOpen = false we hide it.
+- So whenever we want to change the way a component looks like or the data that it displays, just update its state, which we usually do inside an **event handler** function.
+- There is one common **mistake** that many beginners make, which is to use state for every single variable that we need in a component. But that's not really necessary. So do not use state for variables that shouldn't trigger a re-render. Because that will just cause unnecessary re-renders which can cause **performance issues**.
 
 ---
