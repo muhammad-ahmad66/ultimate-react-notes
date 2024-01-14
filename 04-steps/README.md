@@ -455,3 +455,7 @@ function Counter() {
 ```
 
 ---
+
+***Second part of this SECTION will built another project.. let's do that in 05-... folder***
+
+---
