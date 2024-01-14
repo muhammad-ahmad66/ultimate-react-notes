@@ -370,3 +370,87 @@ Another way of figuring out when we need state is: Whenever we want something in
 - There is one common **mistake** that many beginners make, which is to use state for every single variable that we need in a component. But that's not really necessary. So do not use state for variables that shouldn't trigger a re-render. Because that will just cause unnecessary re-renders which can cause **performance issues**.
 
 ---
+
+## `A_Vanilla_JS_Implementation`
+
+[![code]](public/vanilla.html)
+
+---
+
+## `Challenge_1`
+
+SEE CODE OF DATE ADDITION
+
+[Code_Here](https://codesandbox.io/p/sandbox/states-event-challenge-1-5xk6vp?file=%2Fsrc%2FApp.js%3A56%2C37)
+
+```js
+import { useState } from "react";
+import "./styles.css";
+
+export default function App() {
+  return (
+    <div className="App">
+      <Counter />
+    </div>
+  );
+}
+
+function Counter() {
+  const [step, setStep] = useState(1);
+  const [count, setCount] = useState(0);
+
+  // Date Addition
+  const date = new Date();
+  date.setDate(date.getDate() + count);
+
+  function minusStepHandler() {
+    setStep((s) => {
+      if (s <= 1) return s;
+      else return s - 1;
+    });
+  }
+  function plusStepHandler() {
+    setStep((s) => {
+      return s + 1;
+    });
+  }
+
+  function plusCounterHandler() {
+    setCount((c) => c + step);
+  }
+  function minusCounterHandler() {
+    setCount((c) => c - step);
+  }
+
+  return (
+    <>
+      <div>
+        <button onClick={minusStepHandler}>➖</button>
+        <span>Step: {step}</span>
+        <button onClick={plusStepHandler}>➕</button>
+      </div>
+
+      <div>
+        <button onClick={minusCounterHandler}>➖</button>
+        <span>Count: {count}</span>
+        <button onClick={plusCounterHandler}>➕</button>
+      </div>
+
+      <p>
+        <span>
+          {count === 0
+            ? "Today "
+            : count > 0
+            ? `${count} days from today is `
+            : `${Math.abs(count)} days ago was `}
+        </span>
+        <span>{date.toDateString()}</span>
+      </p>
+    </>
+  );
+}
+
+
+```
+
+---
