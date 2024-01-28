@@ -8,6 +8,7 @@
 3. [Building_Form_Handling_Submission](#building_form_handling_submission)
 4. [ControlledElements](#controlledelements)
 5. [State_VS_Props](#state_vs_props)
+6. [Exercise_1-Building_Accordion](#exercise_1-building_accordion)
 
 ---
 
@@ -257,3 +258,176 @@ A very common beginner question or sometimes even an interview question is this.
 [🔝 Back to Top](#table-of-contents)
 
 ---
+
+## `Exercise_1-Building_Accordion`
+
+It's not super hard to understand how state works in REACT, but it can actually be quite tricky to understand how exactly to use it in practice in different situations. But this is a number one skill that we need to have as a REACT developer, and that's way we'll do some practice here.
+
+What we're gonna build is a Flash card project, where a flash card is basically a question on one side. and then when we click on it we get the answer on the other side. when we click on another card then the fist one is close and open clicked one, it's just like an accordion. Here all we need is one piece of state to control all of these cards. This piece of state will keep track of which question ID is currently the active question.
+
+We have an array with all the questions as objects.
+
+### `Style Code and Comments⤵`
+
+```js
+import { useState } from "react";
+import "./styles.css";
+
+export default function App() {
+  return (
+    <div className="App">
+      <FlashCards />
+    </div>
+  );
+}
+
+const questions = [
+  {
+    id: 3457,
+    question: "What language is React based on?",
+    answer: "JavaScript",
+  },
+  {
+    id: 7336,
+    question: "What are the building blocks of React apps?",
+    answer: "Components",
+  },
+  {
+    id: 8832,
+    question: "What's the name of the syntax we use to describe a UI in React?",
+    answer: "JSX",
+  },
+  {
+    id: 1297,
+    question: "How to pass data from parent to child components?",
+    answer: "Props",
+  },
+  {
+    id: 9103,
+    question: "How to give components memory?",
+    answer: "useState hook",
+  },
+  {
+    id: 2002,
+    question:
+      "What do we call an input element that is completely synchronised with state?",
+    answer: "Controlled element",
+  },
+];
+
+function FlashCards() {
+  const [selectedId, setSelectedId] = useState(null); // null, because we want none of the qustion to opened in the beginning.
+
+  function handleClick(id) {
+    setSelectedId(id !== selectedId ? id : null); // condition for if click again, then it should close
+  }
+
+  return (
+    <div className="flashcards">
+      {questions.map((question) => (
+        <div
+          key={question.id}
+          onClick={() => handleClick(question.id)} // remember here, don't do this directly: handleClick(question.id)
+          className={question.id === selectedId ? "selected" : ""}
+        >
+          <p>
+            {question.id === selectedId ? question.answer : question.question}
+          </p>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+```
+
+[🔝 Back to Top](#table-of-contents)
+
+---
+
+## `Challenge_2`
+
+In this challenge, we will upgrade the date counter, that we built before.
+
+[CodeSandBox-Link](https://codesandbox.io/p/sandbox/states-event-challenge-1-forked-z7cqnw?file=%2Fsrc%2FApp.js%3A1%2C1-74%2C1)
+
+**`Code`**  
+
+```js
+import { useState } from "react";
+import "./styles.css";
+
+export default function App() {
+  return (
+    <div className="App">
+      <Counter />
+    </div>
+  );
+}
+
+function Counter() {
+  const [step, setStep] = useState(1);
+  const [count, setCount] = useState(0);
+  const date = new Date();
+  date.setDate(date.getDate() + count);
+
+  function plusCounterHandler() {
+    setCount((c) => c + step);
+  }
+  function minusCounterHandler() {
+    setCount((c) => c - step);
+  }
+
+  function handleReset() {
+    setStep(1);
+    setCount(0);
+  }
+
+  return (
+    <>
+      <div>
+        <input
+          type="range"
+          min="0"
+          max="10"
+          value={step}
+          onChange={(e) => setStep(Number(e.target.value))}
+        />
+        <span>{step}</span>
+      </div>
+
+      <div>
+        <button onClick={minusCounterHandler}>➖</button>
+        {/* <span>Count: {count}</span> */}
+        <input
+          type="text"
+          value={count}
+          onChange={(e) => setCount(Number(e.target.value))}
+        />
+
+        <button onClick={plusCounterHandler}>➕</button>
+      </div>
+
+      <p>
+        <span>
+          {count === 0
+            ? "Today "
+            : count > 0
+            ? `${count} days from today is `
+            : `${Math.abs(count)} days ago was `}
+        </span>
+        <span>{date.toDateString()}</span>
+      </p>
+
+      {count !== 0 || step !== 1 ? (
+        <div>
+          <button onClick={handleReset}>Reset</button>
+        </div>
+      ) : null}
+    </>
+  );
+}
+
+```
+
+[🔝 Back to Top](#table-of-contents)
