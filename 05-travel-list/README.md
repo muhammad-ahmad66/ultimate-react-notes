@@ -1,70 +1,259 @@
-# Getting Started with Create React App
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+# `Travel List Project`
 
-## Available Scripts
+## `Table-Of-Contents`
 
-In the project directory, you can run:
+1. [Building_Project_Layout](#building_project_layout)
+2. [Rendering_Items_list](#rendering_items_list)
+3. [Building_Form_Handling_Submission](#building_form_handling_submission)
+4. [ControlledElements](#controlledelements)
+5. [State_VS_Props](#state_vs_props)
 
-### `npm start`
+---
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+## `Building_Project_Layout`
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+`Breaking up the User Interface into a components`
 
-### `npm test`
+![Project Components](project-components.JPG)
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+`Codes in index.js`
 
-### `npm run build`
+```js
+import React from 'react';
+import ReactDOM from 'react-dom/client';
+import './index.css';
+import App from './App';
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+const root = ReactDOM.createRoot(document.getElementById('root'));
+root.render(
+  <React.StrictMode>
+    <App />
+  </React.StrictMode>
+);
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+```
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+In App.js file, as always we'll create an export App function as a root component. And then we'll have 4 big functions/components that are identified in above image.  
+For now we are building all of these components in App.js file, but in real world we create a new file for each component.
 
-### `npm run eject`
+[🔝 Back to Top](#table-of-contents)
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
+---
 
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+## `Rendering_Items_list`
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
+Rendering list is one of the most common tasks in REACT development. Let's now render a list of packing items.  
+We have an array of few objects,each object describe one item to be packed. like this:
 
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
+```js
+const initialItems = [
+  { id: 1, description: 'Passports', quantity: 2, packed: false },
+  { id: 2, description: 'Socks', quantity: 12, packed: false },
+];
+```
 
-## Learn More
+Remember to render a list we simple used map method on the array.
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+```js
+function PackingList() {
+  return (
+    <ul className="list">
+      {initialItems.map((item) => (
+        <Item item={item} />
+      ))}
+    </ul>
+  );
+}
+```
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+here we have lot of item, first the name of the component(Item), the name of the prop, and then the object itself, which remember is the argument of the callback function in each iteration on the map method.  
+We also add some styles conditionally.
 
-### Code Splitting
+```js
+const initialItems = [
+  { id: 1, description: 'Passports', quantity: 2, packed: false },
+  { id: 2, description: 'Socks', quantity: 12, packed: true },
+  { id: 3, description: 'Charger', quantity: 1, packed: false },
+];
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
+function PackingList() {
+  return (
+    <div className="list">
+      <ul>
+        {initialItems.map((item) => (
+          <Item item={item} />
+        ))}
+      </ul>
+    </div>
+  );
+}
 
-### Analyzing the Bundle Size
+function Item({ item }) {
+  return (
+    <li>
+      <span style={item.packed ? { textDecoration: 'line-through' } : {}}>
+        {item.description}
+        {item.quantity}
+      </span>
+      <button>❌</button>
+    </li>
+  );
+}
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
+```
 
-### Making a Progressive Web App
+[🔝 Back to Top](#table-of-contents)
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
+---
 
-### Advanced Configuration
+## `Building_Form_Handling_Submission`
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
+One of the most important things that we do on the web is to interact with web applications through forms. So forms are fundamental in web applications. Let's now start learning, how to work with forms in REACT.
 
-### Deployment
+When we build forms in REACT, we use the normal HTML form element. In form, we have a select element, input element and then a button.  
+In select element, we have 20 option elements, so we do not manually duplicate options 20 times. Instead we'll create an array of 20 elements and loop over that array, and in each iteration we create a new option element. To create a new array in REACT, we will do is to go into JavaScript mode and then use **Array.from method**, in this method we pass length as an object as a first argument, that will then create an empty array with 20 elements. And then as a second argument we will pas a callback function, in that callback function we have access to current element and index, now we just return index + 1. So as a result we get an array of 1 to 20 values as an elements.
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
+```js
+<select>
+  {Array.from({ length: 20 }, (_, i) => i + 1)}
+</select>
+```
 
-### `npm run build` fails to minify
+Now on this **from method** we'll chain a **map method**, and loop over currently created array, and create a new list of option elements.
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+```js
+<select>
+    {Array.from({ length: 20 }, (_, i) => i + 1).map((num) => (
+      <option value={num} key={num}>{num}</option>
+        ))}
+</select>
+```
+
+Remember: In each list item in REACT we need to pass a unique key, In this case that's the value(num) itself.
+
+Let's now talk about events, What we want to happen here is when we click on add button we want this form to be submitted. We can then react to this form submission with an event handler. Just like before we will add the event handler inside the Form component. And we listen onSubmit event on the form element.
+
+```js
+// Form Component
+function Form() {
+  function handleSubmit(e) {
+    e.preventDefault();
+  }
+
+  return (
+    <form className="add-form" onSubmit={handleSubmit}>
+      <h3>What do you need for your 😍 trip?</h3>
+
+      <select>
+        {Array.from({ length: 20 }, (_, i) => i + 1).map((num) => (
+          <option value={num} key={num}>
+            {num}
+          </option>
+        ))}
+      </select>
+      <input type="text" placeholder="Item" />
+      <button>Add</button>
+    </form>
+  );
+}
+```
+
+Now the question is **how do we actually ge the data from the form into the handleSubmit eventHandler?** There are multiple ways of doing this. we could get that data right from the event object(e). However in REACT we usually don't do this. Instead we use something called **controlled elements**, but that's a topic for whole new lecture.
+
+[🔝 Back to Top](#table-of-contents)
+
+---
+
+## `ControlledElements`
+
+Let's now learn about yet another fundamental REACT concept, which is **controlled elements**.
+
+By default, input fields like input and select, they maintain their own state inside the DOM, so basically inside the HTML itself. Now this makes it hard to read their values and it als leaves this state right here int the DOM, which is not ideal. So in REACT, we usually like to keep all this state in just one central place, So inside the REACT application and not inside the DOM. And in order to do that we use a technique called controlled elements. With this technique it is REACT who controls and owns the state of these input fields and no longer the DOM.  
+Since we want to now keep these data inside the application, what that means is that we need some **state**. Because that form data of course changes over time and we also want to maintain our application in sync with it.  
+In order to implement the Controlled Elements technique, we follow to three steps.
+
+1. We create a piece of state.
+
+    ```js
+    const [description, setDescription] = useState('');```
+
+2. Use this state as a value of the input field, so the value of input filed.
+
+    ```js
+    <input type="text" placeholder="Item" value={description} />
+    ```
+
+3. Need to connect this state with the value that we actually going to type there in input field. So for that also on the same element(input element) we need to listen for the change event.
+
+```js
+<input
+        type="text"
+        placeholder="Item"
+        value={description}
+        onChange={(e) => setDescription(e.target.value)}
+/>
+```
+
+Basically here⤴ whenever we type something in the input field, the change event is fired off and we can react to that event with the onChange event handler. event handlers always receive the event object, then on the event we read the target, which is basically the entire element.
+
+Just do the same thing for select element
+
+```js
+const [quantity, setQuantity] = useState(1);
+<select value={quantity} onChange={(e) => setQuantity(e.target.value)}>
+```
+
+Here the value of the quantity is as a string, the reason for that is e.target.value is always gonna be a string. So before we place this value into the state let first convert into the number. We could use + operator before +e.target.value Or we can use Number function.
+
+`Quick Recap`  
+The technique of control elements basically consists of three steps. We **define a piece of state**, then we **use that piece of state** on the element that we want to control, and then finally we need to **update that state variable** and we do so with the onChange event.
+
+Let's now go ahead and quickly use these values in handleSubmit handler function.
+
+```js
+function handleSubmit(e) {
+    e.preventDefault();
+
+    const newItem = { description, quantity, packed: false, id: Date.now() };
+
+    console.log(newItem);
+  }
+```
+
+Now we got that value, just to finish let's tweak our handle submit function a little bit, for example, when we submit the form without any item, then it still works, but the description is simply empty string, which is our default value of description in useState. However we don't want this to happen, so when there is no description, then we shouldn't even be able to submit the form. That is simple enough. We can add a guard clause in handleSubmit handler.  
+Finally when we submit the form the input fields should go back to it's initial state, so empty state. For that we can simply use our setter functions.  
+
+```js
+  function handleSubmit(e) {
+    e.preventDefault();
+
+    if (!description) return;
+
+    const newItem = { description, quantity, packed: false, id: Date.now() };
+    console.log(newItem);
+
+    setDescription('');
+    setQuantity('');
+  }
+```
+
+Now we have render this data into the UI. We may not use props because these(PackingList & Form) are siblings. The Form is not a parent component of the PackingList component, and therefore we cannot pass props from Form to the PackingList component. `Data only fow down the tree, but not up or side ways.` So need to find another solution. And so this is where we really need to start thinking more about state and state management. For this section we leave this project here, and in next section we will talk about `thinking in REACT`.
+
+[🔝 Back to Top](#table-of-contents)
+
+---
+
+## `State_VS_Props`
+
+A very common beginner question or sometimes even an interview question is this. **What's the difference between state and props?**  
+
+- **State is an internal data**, owned by component. While **Props is an external data**, owned by parent component. We can think of props as a function parameters. So as a communication channel between parent and child components.
+- States can be thought of as a components memory, because it can hold data over time(across multiple re-renders).
+- State can be updated by the component itself, this will then cause the component to be rerendered by REACT. Therefore we use this mechanism of state to make components interactive. On the other side **props** works very differently, **they are read only**. They cannot modified by the component that is receiving them.
+- However, **when the child component receives new updated props that will actually also cause the component to rerender**. So whenever a piece of state is passed as a props to the child component, then when that state updates, both components (component owning, and component receiving, the state) are rerendered.
+- State is used by developers to make components interactive, Props are use to give the parent component, the ability to configure their child components.
+
+[🔝 Back to Top](#table-of-contents)
+
+---
