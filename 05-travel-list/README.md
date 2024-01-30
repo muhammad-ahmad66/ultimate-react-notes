@@ -9,6 +9,13 @@
 4. [ControlledElements](#controlledelements)
 5. [State_VS_Props](#state_vs_props)
 6. [Exercise_1-Building_Accordion](#exercise_1-building_accordion)
+7. [Challenge_2](#challenge_2)
+8. [Next_Section](#next_section)
+9. [What_is_Thinking_in_REACT](#what_is_thinking_in_react)
+10. [Fundamentals_of_State_Management](#fundamentals_of_state_management)
+11. [Thinking_About_State_And_Lifting_State_Up](#thinking_about_state_and_lifting_state_up)
+12. [Deleting_an_Item_Child_to_Parent_Communication](#deleting_an_item_child_to_parent_communication)
+13. [Updating_Item_Complex_Immutable_data_Operation](#updating_item_complex_immutable_data_operation)
 
 ---
 
@@ -431,3 +438,341 @@ function Counter() {
 ```
 
 [🔝 Back to Top](#table-of-contents)
+
+---
+
+## `Next_Section`
+
+### `Thinking in REACT State Management`
+
+This section we'll cover
+
+- Thinking in REACT
+- State management
+- When and where to create state
+- Derived state
+- Lifting up state
+
+[🔝 Back to Top](#table-of-contents)
+
+---
+
+## `What_is_Thinking_in_REACT`
+
+Let's start this section by discovering what thinking in REACT is actually all bout. As we noticed by now, building REACT application requires a completely new mindset because it's just very different applications with vanilla JavaScript. So to build REACT apps, we not only need to learn how to work with the REACT API in practice, with all the different functions like useState, but we also need to be able to think in REACT. We need to enter the REACT mindset. **What does thinking in REACT mean?**  
+Thinking in REACT means that we have a very good metal of how and when to use all teh REACT tools like components, state, props, general data flow, effects and many more. It's also about always thinking in terms of state transitions rather than in element mutations.We can also view thinking in REACT as a whole process, which can help us to build apps in a more structured way.
+
+- The first step in this process is to **break the desired UI into components** and establish how these components are related to one another. This also includes thinking about reusability and composability of components
+- After that we can start by **building a static version of the application**. So without any state and interactivity. This is great because by doing this we do most of the coding up front before having to worry about state and interactivity.  
+- In step three, where we **think about state**. Here we decide, When we need state, What types of state we need and where to place each piece of state.
+- Finally, we think about establishing **how data flows through the application.** This includes thinking about one way data flow, child to parent communication and the way global state should be accessed.  
+These lase 2 steps, what we collectively called **state management**, which is the main focus of this section.
+
+SEE THEORY LECTURE PDF
+
+[🔝 Back to Top](#table-of-contents)
+
+---
+
+## `Fundamentals_of_State_Management`
+
+As state is the most important concept in REACT, Therefore, managing state is also the most important aspect when it comes to thinking in REACT. Let's now talk about fundamentals of state management in REACT.
+
+As we already know we can use the use state function to create multiple pieces of state in order to track data that changes over the lifecycle of an application.  
+State management can be defined in different ways by different peoples. But I like to think of ***state management as deciding when we need to create new pieces of state, what types of state we need, where to place each piece of state inside our code, and also how all the data should flow through the app.***
+
+We use an analogy that State management is basically **giving each piece of state a home within our code.** Up until this point we never have to worry about the states, We simply placed each state in a component that needed it. `But` as an application grows, the need to find the right home for each piece of state starts to become really important. No matter if that home is the component where we first need the state, some parent component or even global state.
+
+Let's analyze the difference between the big two types of state that exist in REACT. **Global state** and **Local state**. In RECT each piece of state is either local state or global state.
+
+### `1. Local State`
+
+- States that is only needed in one component or in a few different components like child or sibling components.
+- We simply create a piece of local state using the useSate function inside a certain component, and that piece of state is then only accessible to that exact component and maybe to its child components, if we pass the state using props.
+
+### `2. Global State`
+
+- State that many components might need, therefore, when we define state as being global that piece os state will become accessible to every single component in the entire app.
+- It's shared between all components and therefore we can also call this shared state.
+- In practice we can define global state using **React Context API** or also an external global management library like **Redux**
+
+**We should always start with local state.** Only move to global state if we really need it.
+
+**How to decide when we actually need state and where we should place it?**  
+It all starts with realizing that we need to store some data. When this happens, the first question to ask is, **will this data change at some point in time?** If the answer is no, then all we need to use regular variable, and probably a const variable. However if the data does need to change in the future, the next question **is it is possible to compute/calculate this new data from existing piece of state or props?** If that's the case, then we should derive the state, so calculated based on an already existing state or props. However most of the time we cannot derive state. In that case, we nee to ask whether updating the state should rerender the component. We have already learned that updating the state always rerender a component, but there is actually something called a red which persists data over time like regular state but does not rerender a component, it's basically a special type of state. Most of time we actually do want to state rerender the component. So in this case, create a new piece of state using the useState function and then place that new piece of state into the component that we are currently building. That's the always start with local state guideline that we talked about in the previous lecture. With tis we've completed **when to create state.**  
+
+Let's now focus on **where to place each new piece of state?** If the state variable that we just created is only used by the current component, then simply leave it in that component. However, the state variable might also be necessary for a child component, and in that case, simply pass the state down into the child component by using props. If the sate variable is also necessary for one or a few sibling components, or even for a parent of the current component, it's time to move the state to the first common parent component. **In REACT this is what we call lifting state up**. Finally the state variable might be needed in even more than just a few siblings, so it might be necessary all over the place in teh component tree, here we use global state.
+
+[🔝 Back to Top](#table-of-contents)
+
+---
+
+## `Thinking_About_State_And_Lifting_State_Up`
+
+Now we're back to the **faraway application.** Let's add some important state to the application and then also lift that state up.
+
+Before we start doing that, let's recap where we left off at the end of previous section. We made a form  with two input elements(input, select), and the state of these two elements is controller inside the form component with the description and quantity state. Then whenever that form submitted the submit event will fire off. And so then we are handling that submit event on form using onSubmit property with the handleSubmit function. Then if there is a description, we create a new item object, which right now we're just logging to the console. But now let's do something else. So we want to store this information(newItem object) somewhere. And to help us with that, we can actually use the flow chart that we just looked at in the previous lecture(see pdf file).  
+The result of looking to the flowchart is that we need to create a new piece of state in the component that we are currently building, this is the answer to the when to create a new state variable. So let's create a new state variable in the Form called items.
+
+```js
+const [items, setItems] = useState([]);
+// As the itemList is an array of objects, so we will give empty array as a default value.
+// Because when a user open the app newly then there should be no items in the list.
+```
+
+Now let's actually use the set items function to add our new items to the items array.  
+The new item array will be the current items array plus the new item added to the end. It means the new state depends on the current state, therefore here we need to pass in a callback function, instead of directly passing the newItem in setItems setter function. And also remember that in REACT we cannot mutate state, so we cannot use simply .push() method, because with that we would be mutating. **React is all about immutability.** The solution here is to create a brand new array which contains all the current items plus the new one, we simply use spread operator.
+
+```js
+ function handleAddItems(item) {
+    setItems((items) => [...items, item]);
+  }
+```
+
+Here our updating logic is working just fine. But this state is now nowhere being displayed in the UI yet. So we are not using this items variable anywhere in our JSX yet. And the reason for that is that actually we do not need these items in this current component. The only goal of the form component is to add new items to this array, but not to render it. Instead, remember that who renders these items is actually the PackingList component. But with this, we now created ourselves a problem. Right now our item state is here inside the form component, However, we need the item state variable in the PackingList component. And so now how do we get this state from the form to the packing list? We cannot pass it as a prop because the form is not a parent component of packing list, it's simply a sibling component. Instead we now need to use a technique that I mentioned before, which is to **lift up state**.  
+
+What we're going to do now is to take this state(item state), and we'll move it to the closest common parent component, in this case it's the app component. And we pass items to the PackingList and Setter function to the form as a props.
+
+`Analyze this code⤵`
+
+```js
+import { useState } from 'react';
+
+export default function App() {
+  const [items, setItems] = useState([]);
+
+  function handleAddItems(item) {
+    setItems((items) => [...items, item]);
+  }
+
+  return (
+    <div className="app">
+      <Logo />
+      <Form onAddItems={handleAddItems} />
+      <PackingList items={items} />
+      <Stats />
+    </div>
+  );
+}
+
+function Logo() {
+  return <h1>🌴 Far Away 💼</h1>;
+}
+
+function Form({ onAddItems }) {
+  const [description, setDescription] = useState('');
+  const [quantity, setQuantity] = useState(1);
+
+  function handleSubmit(e) {
+    e.preventDefault();
+
+    if (!description) return;
+
+    const newItem = { description, quantity, packed: false, id: Date.now() };
+    console.log(newItem);
+
+    onAddItems(newItem);
+    setDescription('');
+    setQuantity('');
+  }
+
+  return (
+    <form className="add-form" onSubmit={handleSubmit}>
+      <h3>What do you need for your 😍 trip?</h3>
+
+      <select
+        value={quantity}
+        onChange={(e) => setQuantity(Number(e.target.value))}
+      >
+        {Array.from({ length: 20 }, (_, i) => i + 1).map((num) => (
+          <option value={num} key={num}>
+            {num}
+          </option>
+        ))}
+      </select>
+      <input
+        type="text"
+        placeholder="Item"
+        value={description}
+        onChange={(e) => setDescription(e.target.value)}
+      />
+      <button>Add</button>
+    </form>
+  );
+}
+
+function PackingList({ items }) {
+  return (
+    <div className="list">
+      <ul>
+        {items.map((item) => (
+          <Item item={item} key={item.id} />
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+function Item({ item }) {
+  return (
+    <li>
+      <span style={item.packed ? { textDecoration: 'line-through' } : {}}>
+        {item.description}
+        {item.quantity}
+      </span>
+      <button>❌</button>
+    </li>
+  );
+}
+
+function Stats() {
+  return (
+    <footer className="stats">
+      <em>🎒 You have X items on your list, and you already packed X (X%)</em>
+    </footer>
+  );
+}
+
+
+```
+
+We now have our handleAddItems function right here in the app, which is exactly where the piece of state also lives. So where we have the home of the items state. So all the logic about updating the items state is in the same component(App). However, it's the form that is actually responsible for creating new items. And therefor we need to give this form component access to a function that can update the state, that function is handleAddItems. As we discussed before we can pass anything as prop, including functions. So here in App Component we pass in handleAddItems as a prop and we call that prop onAddItems, which of course could be called any thing. And receives in the Form component and, we call that onAddItems function whenever the form is submitted.
+
+***So whenever multiple sibling components need access to the same state, we move that piece up to the first common parent component.***
+
+---
+
+### `Reviewing_Lifting_Up_State`
+
+We just created an important piece of state and lifted it up to a parent component that is common to both components that need to use or to update that state. However, this whole idea might still be a bit confusing because in fact, it can seem quite counterintuitive. let's now look at another example and some diagram to really understand how lifting up state works and why it's so important.
+
+State lifting is something that we need to do all the time in REACT app. And remember that we need this pattern in the first place as a direct consequence of REACT's one way data flow.
+
+We can call the technique of passing down a setter function, **child to parent communication** or also **inverse data flow**. Because usually data only flows down, but here we basically have a trick that allows us to have the data flowing up as well, as we passing data to a setter function from the child component.
+
+[🔝 Back to Top](#table-of-contents)
+
+---
+
+## `Deleting_an_Item_Child_to_Parent_Communication`
+
+We just learned what child to parent communication means, And so let's now do some more of it in order to delete items from our list. The idea is whenever we click on one of the cross next to item, then it will delete the item from the state and therefore from the user interface.  
+Since this click is happening inside the Item component, but the state is lives inside of the App, so in the parent component and therefore this is another case of child to parent communication.  
+
+Let's now create a new function called handleDeleteItem in the App component, where our state lives. In order to delete an item, we need to know which item it actually is the should be deleted. To do that we will pass in the ID whenever call this handler function. **To delete an item we will delete the item from the UI by updating the state.**
+
+```js
+function handleDeleteItem(id) {
+    setItems((items) => items.filter((item) => item.id !== id));
+  }
+```
+
+⤴ To delete an item from items array, we will use filter method, which will loop over the array, and in each iteration it will access to the items object. And here we will filter out the items that has id that received in function.  
+
+Now all we need to do is to call this function, whenever the click happened on the cross❌ button. So do got access in the child, we have to pass the deleteItemHandler function as a prop into the PackingList.
+
+```js
+<PackingList items={items} onDeleteItem={handleDeleteItem} />
+```
+
+Now receive this prop inside the PackingList, and then pass to the Item component as a prop again, because the click will happen will there.
+
+```js
+<button onClick={onDeleteItem}>❌</button>
+```
+
+If we do just like this⤴, then it will not gonna work. Because we simply specify the function name and call it without any arguments, then REACT will call the function as the event happens, and it does so by passing in the event object, so it'll simply pass the event object. But we want here is id of the current item as an argument. So like this it will work:
+
+```js
+<button
+  onClick={(e) => {
+  onDeleteItem(item.id);
+  }}>
+```
+
+[🔝 Back to Top](#table-of-contents)
+
+---
+
+## `Updating_Item_Complex_Immutable_data_Operation`
+
+Let's take care of updating items by toggling their packed status. So we will create a checkbox before each item, and when a user clicks on that checkbox then it should marked as packed. So in li element we'll add a input with type checkbox.  
+
+And we want also to transform this checkbox element into a controlled element. `Remember` a controlled element means that, the element has the value defined by some state, and also has an event handler which listens for the changes and updates the state accordingly. The value of this checkbox element will the *item.packed* which will be either true or false. And then we will listen to the onChange event.
+
+```js
+ function handleToggleItem(id) {
+    setChecked((items) =>
+      items.map((item) =>
+        item.id === id ? { ...item, packed: !item.packed } : item
+      )
+    );
+  }
+```
+
+This ⤴ is how we update an array in REACT. Here we loop over the array using map method, and then each iteration we have an object of item, and we'll check for id of the currently check/unchecked element, if it is then we will modify that object's packed property, otherwise will return the same object. Remember here map method will create a new array of objects.
+
+```js
+// Passing as a props to PackingList component
+<PackingList
+        items={items}
+        onDeleteItem={handleDeleteItem}
+        onToggleItem={handleToggleItem}
+      />
+```
+
+```js
+
+// Receiving in PackingList component and also passing to Ite component
+function PackingList({ items, onDeleteItem, onToggleItem }) {
+  return (
+    <div className="list">
+      <ul>
+        {items.map((item) => (
+          <Item
+            item={item}
+            onDeleteItem={onDeleteItem}
+            onToggleItem={onToggleItem}
+            key={item.id}
+          />
+        ))}
+      </ul>
+    </div>
+  );
+}
+```
+
+```js
+// Finally, Receiving and using onToggleItem prop in Item component. 
+// From here we're calling onToggleItem handler function.
+
+function Item({ item, onDeleteItem, onToggleItem }) {
+  return (
+    <li>
+      <input
+        type="checkbox"
+        value={item.packed}
+        onChange={() => {
+          onToggleItem(item.id);
+        }}
+      />
+      <span style={item.packed ? { textDecoration: 'line-through' } : {}}>
+        {item.description}
+        {item.quantity}
+      </span>
+      <button
+        onClick={(e) => {
+          onDeleteItem(item.id);
+        }}
+      >
+        ❌
+      </button>
+    </li>
+  );
+}
+
+```
+
+[🔝 Back to Top](#table-of-contents)
+
+---
