@@ -16,6 +16,8 @@
 11. [Thinking_About_State_And_Lifting_State_Up](#thinking_about_state_and_lifting_state_up)
 12. [Deleting_an_Item_Child_to_Parent_Communication](#deleting_an_item_child_to_parent_communication)
 13. [Updating_Item_Complex_Immutable_data_Operation](#updating_item_complex_immutable_data_operation)
+14. [Derived_State](#derived_state)
+15. [Calculating_Statistics_As_Derived_State](#calculating_statistics_as_derived_state)
 
 ---
 
@@ -257,7 +259,7 @@ Now we have render this data into the UI. We may not use props because these(Pac
 A very common beginner question or sometimes even an interview question is this. **What's the difference between state and props?**  
 
 - **State is an internal data**, owned by component. While **Props is an external data**, owned by parent component. We can think of props as a function parameters. So as a communication channel between parent and child components.
-- States can be thought of as a components memory, because it can hold data over time(across multiple re-renders).
+- Stats can be thought of as a components memory, because it can hold data over time(across multiple re-renders).
 - State can be updated by the component itself, this will then cause the component to be rerendered by REACT. Therefore we use this mechanism of state to make components interactive. On the other side **props** works very differently, **they are read only**. They cannot modified by the component that is receiving them.
 - However, **when the child component receives new updated props that will actually also cause the component to rerender**. So whenever a piece of state is passed as a props to the child component, then when that state updates, both components (component owning, and component receiving, the state) are rerendered.
 - State is used by developers to make components interactive, Props are use to give the parent component, the ability to configure their child components.
@@ -356,7 +358,7 @@ function FlashCards() {
 
 In this challenge, we will upgrade the date counter, that we built before.
 
-[CodeSandBox-Link](https://codesandbox.io/p/sandbox/states-event-challenge-1-forked-z7cqnw?file=%2Fsrc%2FApp.js%3A1%2C1-74%2C1)
+[CodeSandBox-Link](https://codesandbox.io/p/sandbox/Stats-event-challenge-1-forked-z7cqnw?file=%2Fsrc%2FApp.js%3A1%2C1-74%2C1)
 
 **`Code`**  
 
@@ -768,6 +770,80 @@ function Item({ item, onDeleteItem, onToggleItem }) {
         ❌
       </button>
     </li>
+  );
+}
+
+```
+
+[🔝 Back to Top](#table-of-contents)
+
+---
+
+## `Derived_State`
+
+Another aspect that we talked in the state management was derived state. **Derived state is state that is computed from some existing piece of state or from props.** if we create similar kind of state separately creates very difficult of keep data in sync, because same data is places in different states. It also creates a second problem, as it'll then rerender the component three times, which is absolutely unnecessary for same data. **So if one state is dependent on another, then we will simply derived a state from another.** Most of the time we cannot derive state, but whenever we have a situation where one state can be computed from any existing one, then we should not create a new state, but instead always prefer derived state.
+
+[🔝 Back to Top](#table-of-contents)
+
+---
+
+## `Calculating_Statistics_As_Derived_State`
+
+Let's now use the idea of derived state in practice. We want to calculate the statistics, so calculating the number of items on the list, how many we packed, and then percentage of that. Now, if we think about these numbers, for example, the number of items in the list, that number can be directly computed from the items array itself. And so derived state is perfect for this.
+
+But before we use derived state we will discuss and take an example what we should not to do.
+
+```js
+// App component
+const [items, setItems] = useState([]);
+const numItems, setNumItems = useState(0) // Shouldn't do like this
+
+// Now we also have to update this setNumItems function in each of the handler functions
+// like in handleAddItem and handleDeleteIem. like this⤵
+function handleAddItem(){
+  setItem(items =>[...items, item] )
+  setNumItems(num => num +1)
+}
+
+```
+
+So instead of doing this we can define a new variable, and to assign a value we simply derive from items state, so we just calculate based on the items array. like this:
+
+```js
+const numItems = items.length;
+```
+
+This works because as soon as the items(state) are updated, the component will rerender. And when the component rerenders, that means that the App function is called again, and therefore this statement⤴ will run again, therefor the length  will be also updated.
+
+But here this numItems variable, we actually don't need it right in the App component, but in the Stats component. So we have two options one. The first one is to keep num items in the App component and pass it as a prop into Stats. But what makes more sense is to actually calculate this derived Stats(numItems) into the Stats component itself. Because we will be calculating three values, if we calculate them in the App component then we will have to pass all that three values as a prop into Stats components.  
+When a percentage is 100% then we would like to display an entirely different message, telling them they are done.  
+And also in case where length of items is 0, so there is no items then also want to display something else, and even we don't need to calculate any of derived states. This is very good use case of earlier return, we could also say guard clause.
+
+`This Lecture Code`
+
+```js
+
+function Stats({ items }) {
+  if (!items.length)
+    return (
+      <p className="stats">
+        <em>Start adding some items to your packing list 🚀</em>
+      </p>
+    );
+
+  const numItems = items.length;
+  const numPacked = items.filter((item) => item.packed).length;
+  const percentage = Math.round((numPacked / numItems) * 100);
+
+  return (
+    <footer className="stats">
+      <em>
+        {percentage === 100
+          ? 'You got everything! Ready to go ✈'
+          : `🎒 You have ${numItems} items on your list, and you already packed
+        ${numPacked} (${percentage}%)`}
+      </em>
+    </footer>
   );
 }
 
