@@ -18,6 +18,12 @@
 13. [Updating_Item_Complex_Immutable_data_Operation](#updating_item_complex_immutable_data_operation)
 14. [Derived_State](#derived_state)
 15. [Calculating_Statistics_As_Derived_State](#calculating_statistics_as_derived_state)
+16. [Sorting_Items](#sorting_items)
+17. [Clearing_the_List](#clearing_the_list)
+18. [Moving_Components_into_Separate_Files](#moving_components_into_separate_files)
+19. [Exercise_1-Accordion_V1](#exercise_1-accordion_v1)
+20. [The_Children_Prop_Making_a_Reusable_Button](#the_children_prop_making_a_reusable_button)
+21. [Exercise-2_Accordion_V2](#exercise-2_accordion_v2)
 
 ---
 
@@ -852,3 +858,512 @@ function Stats({ items }) {
 [🔝 Back to Top](#table-of-contents)
 
 ---
+
+## `Sorting_Items`
+
+Let's add a new feature to our application, which is to allow users to sort the items by three different criteria. Basically we'll build select button, from there a user can choose which of these criteria they want to sort the list by. Somethings that is very common in most web applications, let's now build very simple version of that.
+
+We will add those buttons right in the PackingList component.
+
+```js
+// In the PackingList component
+ <div className="actions">
+        <select>
+          <option value="input">Sort by input order</option>
+          <option value="description">Sort by description</option>
+          <option value="packed">Sort by packed status</option>
+        </select>
+      </div>
+```
+
+Now let's see how we can actually implement this. First of all we need to know inside of App component, what is the currently selected option for sorting. So for that we will once again transform this select element into a controlled element. So for that we need our three step. 1. create a new state, so creating in PackingList component. 2. use that state variable in JSX. So we'll give sortBy as a value of select element. 3. Attach the onChange event handler to update the sortBy variable, by using setSortBy function.
+
+```js
+// First step
+const [sortBy, setSortBy] = useState('input');
+
+// Second and Third steps
+<div className="actions">
+        <select value={sortBy} onChange={(e) => setSortBy(e.target.value)}>
+          <option value="input">Sort by input order</option>
+          <option value="description">Sort by description</option>
+          <option value="packed">Sort by packed status</option>
+        </select>
+      </div>
+```
+
+Now all we left here to implement the logic to sort according to the selected option.  
+**How do we get our application to display the items sorted by whatever criteria we selected?** Basically we'll just create a new items which is then sorted by that criteria. So we're not going to manipulate the original items array, that state should unchanged. So we will now use again derived state, because sorting one array can of course be computed based on that initial array.
+
+so we create a new variable called sortedItems, and will store elements in this array conditionally. **If the sortBy variable is equal to 'input'** then we will fill sorted array as the elements are in items array, so no changes here, because it's default one.
+
+```js
+let sortedItems;
+
+if (sortBy === 'input') sortedItems = items;
+```
+
+And now **if the sortBy variable is equal to 'description'** then, we use slice method on items array, this will create a copy of items array. This is important because sort method is a mutating method.
+
+```js
+if (sortBy === 'description')
+    sortedItems = items
+      .slice()
+      .sort((a, b) => a.description.localeCompare(b.description));
+```
+
+**Finally if sortBy is equal to 'packed'**, then ... As packed is boolean so we need to convert it to a number.
+
+```js
+if (sortBy === 'packed')
+    sortedItems = items
+      .slice()
+      .sort((a, b) => Number(a.packed) - Number(b.packed));
+
+```
+
+`Full Code of this lec`
+
+```js
+function PackingList({ items, onDeleteItem, onToggleItem }) {
+  const [sortBy, setSortBy] = useState('input');
+
+  let sortedItems;
+
+  if (sortBy === 'input') sortedItems = items;
+
+  if (sortBy === 'description')
+    sortedItems = items
+      .slice()
+      .sort((a, b) => a.description.localeCompare(b.description));
+
+  if (sortBy === 'packed')
+    sortedItems = items
+      .slice()
+      .sort((a, b) => Number(a.packed) - Number(b.packed));
+
+  return (
+    <div className="list">
+      <ul>
+        {sortedItems.map((item) => (
+          <Item
+            item={item}
+            onDeleteItem={onDeleteItem}
+            onToggleItem={onToggleItem}
+            key={item.id}
+          />
+        ))}
+      </ul>
+
+      <div className="actions">
+        <select value={sortBy} onChange={(e) => setSortBy(e.target.value)}>
+          <option value="input">Sort by input order</option>
+          <option value="description">Sort by description</option>
+          <option value="packed">Sort by packed status</option>
+        </select>
+      </div>
+    </div>
+  );
+}
+```
+
+---
+
+## `Clearing_the_List`
+
+Let's now make our application feature complete by adding a button to clear up the entire list at once. And so to do that we all add new button after the select element.
+
+```js
+// In App component
+function handleClearList() {
+    setItems([]);
+  }
+
+// In PackingList component(get accessed using prop)
+<button onClick={onClearList}>Clear list</button>
+```
+
+Now we will add when a user click on the clear button, first show the alert window, to prevent accidentally deleting everything.  That is pretty easy because that's just a standard DOM function, so that's the function that's not really part of JavaScript, but it's part of web API. we will use confirm function, in this function we can pass in any sting, that going to be the message that the user will see. When the use clicks on ok the variable will hold true, if the user clicks cancel it become false.
+
+```js
+  function handleClearList() {
+    const confirmed = window.confirm('Are you sure you want to delete items?');
+    
+    if (confirmed) setItems([]);
+  }
+```
+
+---
+
+## `Moving_Components_into_Separate_Files`
+
+Let's now split up App.js file into multiple component files. This will just be a very simple exercise of taking each components and placing them into their own file. Create a new file in src for each component and paste the code into it.  
+Remember in JavaScript there are two types of exports 1. named (should import with exact same name) 2.default export(importing, the name may be anything.)  
+
+Just select each component and right click, then click on refactor, to the new file. VS code will do automatically export and import.  
+Taking it one step further we can ever put all components into a new folder called components.
+
+With this we're finished this project.
+
+---
+
+## `Exercise_1-Accordion_V1`
+
+```js
+import { useState } from 'react';
+import './index.css';
+
+const faqs = [
+  {
+    title: 'Where are these chairs assembled?',
+    text: 'Lorem ipsum dolor sit amet consectetur, adipisicing elit. Accusantium, quaerat temporibus quas dolore provident nisi ut aliquid ratione beatae sequi aspernatur veniam repellendus.',
+  },
+  {
+    title: 'How long do I have to return my chair?',
+    text: 'Pariatur recusandae dignissimos fuga voluptas unde optio nesciunt commodi beatae, explicabo natus.',
+  },
+  {
+    title: 'Do you ship to countries outside the EU?',
+    text: 'Excepturi velit laborum, perspiciatis nemo perferendis reiciendis aliquam possimus dolor sed! Dolore laborum ducimus veritatis facere molestias!',
+  },
+];
+
+export default function App() {
+  return (
+    <div>
+      <Accordion data={faqs} />
+    </div>
+  );
+}
+
+function Accordion({ data }) {
+  return (
+    <div className="accordion">
+      {data.map((el, i) => (
+        <AccordionItem
+          title={el.title}
+          text={el.text}
+          num={i + 1}
+          key={el.title}
+        />
+      ))}
+    </div>
+  );
+}
+
+function AccordionItem({ num, title, text }) {
+  const [isOpen, setIsOpen] = useState(false);
+
+  function handleToggle() {
+    setIsOpen((isOpen) => !isOpen);
+  }
+
+  return (
+    <div className={`item ${isOpen ? 'open' : ''}`} onClick={handleToggle}>
+      <p className="number">{num < 9 ? `0${num}` : num}</p>
+      <p className="title">{title}</p>
+      <p className="icon">{isOpen ? '➖' : '➕'}</p>
+      {isOpen && <div className="content-box">{text}</div>}
+    </div>
+  );
+}
+
+
+```
+
+Here we see each of box has their own state, so when we click on any of the box, it opens or close. So we need to have a state in the AccordionItem component. Each of the items operates completely independently from the other ones. i-e if we can open multiple boxes at a time.
+
+---
+
+## `The_Children_Prop_Making_a_Reusable_Button`
+
+It's time to learn about yet another fundamental concept that we use all the time in REACT development, and that's the **children prop**.  
+
+To practice this we'll use Steps project, that we built in previous section. To see actual code go there.
+
+The idea is that we want to create a reusable buttons for previous and next buttons. And we also want to add an emoji to these buttons as well.  
+
+```js
+function Button() {
+  return (
+    <button
+      style={{ backgroundColor: '#7950f2', color: '#fff' }}
+      onClick={handleNext}
+    >
+      Text
+    </button>
+  );
+}
+```
+
+Now the idea is the we can pass in color, background color, clickHandler, and the text as a props.
+
+***`This is our Reusable Button`***
+
+```js
+function Button({ textColor, bgColor, onClick, text, emoji }) {
+  return (
+    <button
+      style={{ backgroundColor: bgColor, color: textColor }}
+      onClick={onClick}
+    >
+     <span>{emoji}</span> {text}
+    </button>
+  );
+}
+```
+
+***`And here we are calling that Button`***
+
+```js
+<Button
+  textColor="#fff"
+  bgColor="#7950f2"
+  text="Previous"
+  onClick={handlePrevious}
+  emoji='👈'
+/>
+```
+
+Let's now say we also want to add an emoji, that's easy enough. All we have to do is pass as prop and accepts it in Button component. Added there⤴
+
+That works nice. But now let's say we want the emoji on Pre button before the text as it's right now, and on Next button it should be after the text, here we have a problem. because our emojis are left side of the text on both buttons. We could add yet another prop to specify the direction, but here we've already so many props.  
+
+**`Instead use the children prop`**, So instead of passing in **direction**, **emoji**, and **text**, what if we simply pass the content right into the button as well? In other words, **what if we could pass simply some JSX into the component and then the component could use that JSX and simply display it?**  
+We can actually do that in REACT. Notice that! up until this point, all our components have always been self-closing. So we never had like this **<Button Props>Content</Button>**, But in fact, we can do exactly this. Just like we do in html elements where we have an opening tag, then some content, and then a closing tag.  
+
+`These are out Buttons, That calling Button component`
+
+```js
+<Button textColor="#fff" bgColor="#7950f2" onClick={handlePrevious}>
+  <span>👈</span> Previous
+</Button>
+
+<Button textColor="#fff" bgColor="#7950f2" onClick={handleNext}>
+  Next <span>👉</span>
+</Button>
+```
+
+Now it's time to give the Button element access to whatever content we wrote in between the opening tag and the closing tag. So that's where finally the children prop comes into play. ***The children prop the prop that each REACT component automatically receives and teh value of the children prop is exactly what is between the opening and closing tags fo the component. We simply have to write children in the Component as a prop.*** And this is a predefined keyword inside REACT.
+
+```js
+// Reusable Button Component
+function Button({ textColor, bgColor, onClick, children }) {
+  return (
+    <button
+      style={{ backgroundColor: bgColor, color: textColor }}
+      onClick={onClick}
+    >
+      {children}
+    </button>
+  );
+}
+
+```
+
+*And with this we just gained a brand new and really really important tool that is used all the time. It's actually is one of the most useful features. It allows us to make our components truly reusable.*
+
+---
+
+## `More_Reusability_with_the_children`
+
+Let's now built another reusable component by leveraging the children prop once again. This time let's say we wanted a component do display a message. In that message we want to display, current step, and the different content for different steps.
+
+```js
+function StepMessage({ step, children }) {
+  <p className="message">
+    <h3>Step{step}</h3>
+    {children}
+  </p>;
+}
+```
+
+Here we left an empty hole as a children, this empty hole can then be filled with whatever we pass in between opening and the closing tag of StepMessage component. Here the deference with button is that, in Button that whole was all the content of the button. but here  StepMessage we have always display h3 tag, with step itself and then children.
+
+`Calling StepMessage`
+
+```js
+<StepMessage step={step}>{messages[step - 1]}</StepMessage>
+```
+
+---
+
+## `Exercise-2_Accordion_V2`
+
+V2
+When we click on one of the items, then it will open, and then we we'll on another one then only that one stays open and all the other ones are closed. It means each Item has no longer controlled whether it's open or not, Instead it's now the accordion who knows which of the items are opened and then only that item basically is allowed be open.  
+
+We create a new state variable in accordion component call curOpen, which holds the currently opened item number. Then we pass that number into AccordionItem component, from there it will calculate whether is currently open or not.
+
+```js
+import { useState } from 'react';
+import './index.css';
+
+const faqs = [
+  {
+    title: 'Where are these chairs assembled?',
+    text: 'Lorem ipsum dolor sit amet consectetur, adipisicing elit. Accusantium, quaerat temporibus quas dolore provident nisi ut aliquid ratione beatae sequi aspernatur veniam repellendus.',
+  },
+  {
+    title: 'How long do I have to return my chair?',
+    text: 'Pariatur recusandae dignissimos fuga voluptas unde optio nesciunt commodi beatae, explicabo natus.',
+  },
+  {
+    title: 'Do you ship to countries outside the EU?',
+    text: 'Excepturi velit laborum, perspiciatis nemo perferendis reiciendis aliquam possimus dolor sed! Dolore laborum ducimus veritatis facere molestias!',
+  },
+];
+
+export default function App() {
+  return (
+    <div>
+      <Accordion data={faqs} />
+    </div>
+  );
+}
+
+function Accordion({ data }) {
+  const [curOpen, setIsOpen] = useState(null);
+
+  return (
+    <div className="accordion">
+      {data.map((el, i) => (
+        <AccordionItem
+          title={el.title}
+          num={i + 1}
+          key={el.title}
+          curOpen={curOpen}
+          onOpen={setIsOpen}
+        >
+          {el.text}
+        </AccordionItem>
+      ))}
+    </div>
+  );
+}
+
+function AccordionItem({ num, title, onOpen, curOpen, children }) {
+  const isOpen = num === curOpen;
+
+  function handleToggle() {
+    onOpen(isOpen ? null : num);
+  }
+
+  return (
+    <div className={`item ${isOpen ? 'open' : ''}`} onClick={handleToggle}>
+      <p className="number">{num < 9 ? `0${num}` : num}</p>
+      <p className="title">{title}</p>
+      <p className="icon">{isOpen ? '➖' : '➕'}</p>
+      {isOpen && <div className="content-box">{children}</div>}
+    </div>
+  );
+}
+
+```
+
+---
+
+## `Challenge_1-Tip_Calculator`
+
+We're going to build very simple tip calculator.
+
+[See on CodeSandBox](https://codesandbox.io/p/sandbox/eloquent-brook-7qc8lw?file=%2Fsrc%2FApp.js%3A1%2C1-87%2C1)
+
+### `CODE`
+
+```js
+import { useState } from "react";
+import "./styles.css";
+
+export default function App() {
+  return (
+    <div className="App">
+      <TipCalculator />
+    </div>
+  );
+}
+
+function TipCalculator() {
+  const [bill, setBill] = useState("");
+  const [percentage1, setPercentage1] = useState(0);
+  const [percentage2, setPercentage2] = useState(0);
+
+  function handleReset() {
+    setBill("");
+    setPercentage1(0);
+    setPercentage2(0);
+  }
+
+  const tip = bill * ((percentage1 + percentage2) / 2 / 100);
+  return (
+    <div>
+      <BillInput bill={bill} onSetBill={setBill} />
+      <SelectPercentage percentage={percentage1} onSelect={setPercentage1}>
+        How did you like the service?
+      </SelectPercentage>
+      <SelectPercentage percentage={percentage2} onSelect={setPercentage2}>
+        How did your friend like the service?
+      </SelectPercentage>
+      {bill > 0 && (
+        <>
+          <Output bill={bill} tip={tip} />
+          <Reset onReset={handleReset} />
+        </>
+      )}
+    </div>
+  );
+}
+
+function BillInput({ bill, onSetBill }) {
+  return (
+    <div>
+      <label htmlFor="bill">How much was the bill:</label>
+      <input
+        value={bill}
+        onChange={(e) => onSetBill(Number(e.target.value))}
+        id="bill"
+        type="text"
+        placeholder="Bill value"
+      />
+    </div>
+  );
+}
+
+function SelectPercentage({ children, percentage, onSelect }) {
+  return (
+    <div>
+      <label htmlFor="">{children}</label>
+      <select
+        name=""
+        value={percentage}
+        onChange={(e) => onSelect(Number(e.target.value))}
+      >
+        <option value="0">Dissatisfied (0%)</option>
+        <option value="5">It was okay (5%)</option>
+        <option value="10">It was good (10%)</option>
+        <option value="20">Absolutely Amazing (20%)</option>
+      </select>
+    </div>
+  );
+}
+
+function Output({ bill, tip }) {
+  return (
+    <h3>
+      You pay ${bill + tip} ({bill} + {tip} tips)
+    </h3>
+  );
+}
+
+function Reset({ onReset }) {
+  return <button onClick={onReset}>Reset</button>;
+}
+
+```
+
+---
+
+***END OF SECTION***  
+***`31/01/2024`***
+
+--
