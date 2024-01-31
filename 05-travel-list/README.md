@@ -24,6 +24,7 @@
 19. [Exercise_1-Accordion_V1](#exercise_1-accordion_v1)
 20. [The_Children_Prop_Making_a_Reusable_Button](#the_children_prop_making_a_reusable_button)
 21. [Exercise-2_Accordion_V2](#exercise-2_accordion_v2)
+22. [Challenge_1-Tip_Calculator](#challenge_1-tip_calculator)
 
 ---
 
@@ -1363,7 +1364,7 @@ function Reset({ onReset }) {
 
 ---
 
-***END OF SECTION***  
+***`END OF SECTION`***  
 ***`31/01/2024`***
 
---
+---
