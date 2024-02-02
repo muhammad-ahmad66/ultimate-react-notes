@@ -12,7 +12,7 @@
 
 ## `Splitting UI into Components`
 
-![eat-n-split-components](eat-n-split-components.png)
+![eat-n-split-components](eat-n-split-conponents.png)
 
 ## `Building_Static_App-List_of_Friends`
 
