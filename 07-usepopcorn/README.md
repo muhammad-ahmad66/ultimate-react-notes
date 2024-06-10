@@ -258,14 +258,14 @@ Now Finished!!
 
 Let's quickly talk about different component categories that naturally emerge in most REACT code bases. So most of components will naturally fall into one of three categories.
 
-1. Stateless/Presentational components.
+1. Stateless/Presentational components.  
    👉 **No state**  
    👉 Can receive **props** an simply present received data or other content.  
    👉 Usually small components and **reusable**.
-2. Stateful components
+2. Stateful components  
    👉 **Have state**  
    👉 Can still be **reusable**
-3. Structural components
+3. Structural components  
    👉 **Pages**, **layouts** or **screens** of the page  
    👉 Can be huge and not reusable.
 
@@ -1358,6 +1358,6 @@ function TextExpander({
 
 ---
 
-**_`08 June 2024 - 4:03 PM --- -Muhammad Ahmad`_**
+**_`08 June 2024 - 4:03 AM --- -Muhammad Ahmad`_**
 
 ---
