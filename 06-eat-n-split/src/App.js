@@ -1,22 +1,22 @@
-import { useState } from 'react';
+import { useState } from "react";
 
 const initialFriends = [
   {
     id: 118836,
-    name: 'Clark',
-    image: 'https://i.pravatar.cc/48?u=118836',
+    name: "Clark",
+    image: "https://i.pravatar.cc/48?u=118836",
     balance: -7,
   },
   {
     id: 933372,
-    name: 'Sarah',
-    image: 'https://i.pravatar.cc/48?u=933372',
+    name: "Sarah",
+    image: "https://i.pravatar.cc/48?u=933372",
     balance: 20,
   },
   {
     id: 499476,
-    name: 'Anthony',
-    image: 'https://i.pravatar.cc/48?u=499476',
+    name: "Anthony",
+    image: "https://i.pravatar.cc/48?u=499476",
     balance: 0,
   },
 ];
@@ -75,7 +75,7 @@ export default function App() {
         {showAddFriend && <FormAddFriend onAddFriend={handleAddFriend} />}
 
         <Button onClick={handleShowAddFriend}>
-          {showAddFriend ? 'Close' : 'Add Friend'}
+          {showAddFriend ? "Close" : "Add Friend"}
         </Button>
       </div>
 
@@ -83,6 +83,7 @@ export default function App() {
         <FormSplitBill
           selectedFriend={selectedFriend}
           onSplitBill={handleSplitBill}
+          key={selectedFriend.id}
         />
       )}
     </div>
@@ -110,7 +111,7 @@ function Friend({ friend, onSelection, selectedFriend }) {
   const isSelected = selectedFriend?.id === friend.id;
 
   return (
-    <li className={isSelected ? 'selected' : ''}>
+    <li className={isSelected ? "selected" : ""}>
       <img src={friend.image} alt={friend.name} />
       <h3>{friend.name}</h3>
 
@@ -128,15 +129,15 @@ function Friend({ friend, onSelection, selectedFriend }) {
 
       {friend.balance === 0 && <p>You and {friend.name} are even.</p>}
       <Button onClick={() => onSelection(friend)}>
-        {isSelected ? 'Close' : 'Select'}
+        {isSelected ? "Close" : "Select"}
       </Button>
     </li>
   );
 }
 
 function FormAddFriend({ onAddFriend }) {
-  const [name, setName] = useState('');
-  const [image, setImage] = useState('https://i.pravatar.cc/48');
+  const [name, setName] = useState("");
+  const [image, setImage] = useState("https://i.pravatar.cc/48");
 
   function handleSubmit(e) {
     e.preventDefault();
@@ -151,8 +152,8 @@ function FormAddFriend({ onAddFriend }) {
     };
 
     onAddFriend(newFriend);
-    setName('');
-    setImage('https://i.pravatar.cc/48');
+    setName("");
+    setImage("https://i.pravatar.cc/48");
   }
 
   return (
@@ -177,17 +178,17 @@ function FormAddFriend({ onAddFriend }) {
 }
 
 function FormSplitBill({ selectedFriend, onSplitBill }) {
-  const [bill, setBill] = useState('');
-  const [paidByUser, setPaidByUser] = useState('');
-  const paidByFriend = bill ? bill - paidByUser : '';
-  const [whoIsPaying, setWhoIsPaying] = useState('user');
+  const [bill, setBill] = useState("");
+  const [paidByUser, setPaidByUser] = useState("");
+  const paidByFriend = bill ? bill - paidByUser : "";
+  const [whoIsPaying, setWhoIsPaying] = useState("user");
 
   function handleSubmit(e) {
     e.preventDefault();
 
     if (!bill || !paidByUser) return;
 
-    onSplitBill(whoIsPaying === 'user' ? paidByFriend : -paidByUser);
+    onSplitBill(whoIsPaying === "user" ? paidByFriend : -paidByUser);
   }
 
   return (
