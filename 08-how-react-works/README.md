@@ -15,6 +15,10 @@
 10. [Using Key Prop Fix Eat-N-Split App](#using-key-prop-fix-eat-n-split-app)
 11. [Rules for Render Logic Pure Components](#rules-for-render-logic-pure-components)
 12. [State Update Batching](#state-update-batching)
+13. [State Update Batching in Practice](#state-update-batching-in-practice)
+14. [How Events Work in React](#how-events-work-in-react)
+15. [Libraries vs Frameworks and The React Ecosystem](#libraries-vs-frameworks-and-the-react-ecosystem)
+16. [Section Summary](#section-summary)
 
 ---
 
@@ -226,7 +230,8 @@ So you might be wondering why do we even need stuff like the virtual DOM, a reco
 
 **How does React actually do that? How does it know what changed from one render to the next one?** That's where a process of reconciliation comes to play. **So, reconciliation is basically deciding exactly which DOM elements need to be inserted, deleted or updated in order to reflect the latest state changes.** The result of reconciliation process is going to be a list of DOM operations that are necessary to update the current DOM with the new state. Reconciliation is processed by a reconciler, and we can say that reconciler really is the engine of React. It's like the heart of React. It's this reconciler that allows us to never touch the DOM directly and instead simply tell React what the next snapshot of the UI should look like based on state. As we mentioned above the **current reconciler in React is called fiber.**
 
-[!Reconciliation Process](./reconcilation.jpeg)
+![Reconciliation Process](./reconcilation.jpeg)
+
 This is how it works?  
 During the initial render of the application, fiber takes the entire React element tree. So the virtual DOM and based on it builds yet another tree, which is the fiber tree. The fiber tree is a special internal tree where for each component instance and DOM element in the app there is one so-called fiber. What special about this tree is unlike React elements in the virtual DOM, fibers are not recreated on every render. So the fiber tree is never destroyed. Instead it's a mutable data structure. And once it has been created during the initial render, it simply mutated over and over again in future reconciliation steps. And this fibers the perfect place for keeping track of things like the current component state, props, side effects, list of used hooks and more.  
 So the actual state and props of any component instance that we see on the screen are internally stored inside the corresponding fiber in the fiber tree. Each fiber also contains a queue of work to do. like updating state, updating refs, running registered side effects, performing DOM updates and so on. This is why a fiber is also defined as a unit of work. Now if we take a quick look at the fiber tree, we will see that the fibers are arranged in a different way than the elements in the React element tree. So instead of a normal parent child relationship, each first child has a link to its parent and all the other children then have a link to their previous sibling. And this kind of structure is called a linked list, and it makes it easier for React to process the the work that is associated with each fiber. In below image we also see that both trees(Virtual DOM & Fiber tree) include not only React elements or components, but also regular DOM elements such as h3 and button elements in this example. So both trees really are a complete representation of the entire DOM structure, not just of React components.  
@@ -235,8 +240,10 @@ So the actual state and props of any component instance that we see on the scree
 Going back to the idea that fibers are units of work. One extremely important characteristic of the fiber reconciler, is that work can be performed asynchronously. This means that the rendering process, which what the reconciler does, can be split into chunks. Some tasks can be prioritized over others and work can be paused, reused or thrown away if not valid. Keep in mind that all this happens automatically behind the scenes.  
 There are, however, also some practical used of this asynchronous rendering because it enables modern, so-called concurrent features like suspense or transitions starting in React 18. It also allows the rendering process to pause and resume later so that it won't block the browser's JavaScript engine with too long renders, which can be problematic for performance in large applications. This is only possible because the render phase does not produce any visible output to the DOM yet.
 
-Now it's time to talk about what fiber actually does, which is the reconciliation process. Let's take a practical example to understand this.  
-[Reconciliation in Action](./reconcilaition-in-action.jpeg)  
+Now it's time to talk about what fiber actually does, which is the reconciliation process. Let's take a practical example to understand this.
+
+![Reconciliation in Action](./reconcilaition-in-action.jpeg)
+
 In this example, in the App component there is a piece of state called showModel, which is currently set to true. Let's say that the state is updated to false. This will trigger a rerender which will create a new virtual DOM. In this tree the model and all its children are actually gone because they are no longer displayed when show model is not true. Also all remaining React elements are yellow, meaning that all of them were rerendered. **Do you remember why that is?** It's because all children of a rerendered element are rerendered as well. Anyway this new virtual DOM now needs to be reconciled with the current fiber tree, which will then result a new updated tree, which internally is called `Work in Progress Tree`. So whenever reconciliation needs to happen, fiber walks through the entire tree step by step and analyzes exactly what needs to change between the current fiber and the updated fiber tree based on the new virtual DOM. This process of comparing elements step by step based on their position in the tree is called `Diffing`. We'll explore how diffing works a bit late in this section.  
 Anyway, let quickly analyze fiber tree where a marked new work that is related to `DOM mutations`. First the Btn component has some new text, and so the work that will need to be done in this fiber is a DOM update. Then we have Model, Overlay, h3 and button. So these were in the current fiber tree but are no longer in the virtual DOM and therefore they are marked as `DOM deletion`.  
 Finally, we have the interesting case of the video component. So this component was rerendered because it's child of the App component, but it actually didn't change. And so as a result of reconciliation, the DOM will not be updated in this case. Now, once this process is over, all these mutations will be placed into a list called the `List of Effects`, which will be used in the next phase, so in the commit phase to actually mutate the DOM.
@@ -466,5 +473,276 @@ So it would be nice to also have automatic batching in those situations to impro
 So again, if you're using the latest react version you will now get automatic batching all the time everywhere in your code. And if for some reason you're working with an older version of React maybe at your work, it's important that you know that batching used to work in a different way before version 18. Now there are also some extremely rare situations in which automatic batching can be problematic. So if you ever find yourself in a situation like that, you can just wrap the problematic state update in a **_reactDom.flushSync() function._** And react will then exclude that update from batching. But you will most likely never need this. I'm just mentioning this here so that you know that it exists.
 
 Okay, and that's it about state update batching. It turned out to be a bit longer than I thought, but as always there's just so much interesting stuff to learn and so I hope that you don't mind at all. But in any case, let's quickly go to the next lecture so I can show you some of this in practice.
+
+---
+
+## `State Update Batching in Practice`
+
+So let's move back to our project and see how React batches, state updates in practice and how this state updates is asynchronous. Let's come down to our TabContent component and then play around a little bit with the states that we have here.
+
+First of all we want to implement the functionality of the **undo** button. This button will basically undo/reset the two state that we have there(likes and showDetails).
+
+```js
+function handleUndo() {
+  setShowDetails(true);
+  setLikes(0);
+}
+
+console.log("RENDER");
+
+<button onClick={handleUndo}>Undo</button>;
+```
+
+So as we learned in the previous lecture, inside of this⤴ event handler function. There two state updates are batched. So they will only cause one component rerender. To prove that just log anything to the console. then each time that the component gets rerendered, this console.log render to the console. If we click on undo button then we should only see only one RENDER in console, although we have two states updating. Yeah exactly.  
+To check that the state updates is an asynchronous. If we try to log the number of likes in handleUndo handler function immediately after setLikes(0) statement, then we should get the previous value of likes, so the value before resetting.
+
+```js
+function handleUndo() {
+  setShowDetails(true);
+  setLikes(0);
+  console.log(likes); // Here we get the previous value of likes, so the value before resetting. Not zero
+}
+```
+
+So the reason that we get this result instead of zero is that state is in fact actually only updated after the rerendering or during the rerendering, but not immediately after we call the setLikes() function.
+
+By the way, **if we click again on the undo button, so basically after once resetting, then what will get rendered?** So here see 0 but there's no RENDER was logged to the console. **Why do you think that is? so Why was the component instance not rerendered this time?** It's because both of the state values were already at their default, so detail is already true and likes is 0, And so as we attempted to update the state, both of them were actually not updated, that's because the new state was equal to the current state. So in this situation, React will not try to attempt to update the state, and the of course, it will also not rerender the component instance. So that's why nothing happens.
+
+Now let's implement the three plus(+++) button. When we click there, we actually want a super like, this should then improve by three. create a handler function for that.
+
+```js
+function handleTripleInc() {
+  setLikes(likes + 1);
+  setLikes(likes + 1);
+  setLikes(likes + 1);
+}
+
+// from JSX
+<button onClick={handleTripleInc}>+++</button>;
+```
+
+**What do you think is going to happen when I click here on triple like button? Particularly in State** **_`Important question`_**  
+I only increased once, so not three as we might expect. **Let's see why that is?** At the beginning of this function likes was zero. Then in first function call setLikes(likes + 1), should be one, Then in the next line, as we already see in previous example likes is still zero, that's because the state update is an asynchronous, so 0 + 1 again, and in third function call it's exactly the same. So in all three functions calls the likes is zero then plus one. **So here the state is now stale**
+
+**So the thing is how could we make this work if we really wanted to update the state three times like we write here?** Actually, we have been doing that all along. So all the time whenever, we were updating the state based on the current state, we would use a callback function instead of just a value.
+
+```js
+function handleTripleInc() {
+  // setLikes(likes + 1);
+  // setLikes(likes + 1);
+  // setLikes(likes + 1);
+
+  setLikes((likes) => likes + 1);
+  setLikes((likes) => likes + 1);
+  setLikes((likes) => likes + 1);
+}
+```
+
+In callback function the first argument is the current value of the state and then we just return the new one. YEAH, NOW IT WORKS. THIS IS THE TRICK THAT CHANGES THE WAY THE STATE IS UPDATED.
+
+_This is the reason we have been telling,_ **_that each time we set state based on the current state we should always use a callback function._**
+
+So it's best practice to always use a callback function to change the state, even if it's not based on the current state.
+
+```js
+function handleInc() {
+  setLikes((likes) => likes + 1);
+}
+
+function handleTripleInc() {
+  // setLikes(likes + 1);
+  // setLikes(likes + 1);
+  // setLikes(likes + 1); // Not working as expected
+
+  // setLikes((likes) => likes + 1);
+  // setLikes((likes) => likes + 1);
+  // setLikes((likes) => likes + 1); // working
+
+  handleInc();
+  handleInc();
+  handleInc(); // working, but should change handleInc function.
+}
+```
+
+Now to finish, let's just prove that automatic batching now works in REACT-18, even outside of the event handlers. Here we have a button, `Undo in 2s` It should reset/undo our state two seconds later after clicking.
+
+```js
+function handleUndoLater() {
+  setTimeout(handleUndo, 2000);
+}
+// here handleUndo is no longer an event handler function.
+// It's just any function that simply gets called at a later time.
+
+<button onClick={handleUndoLater}>Undo in 2s</button>;
+```
+
+Indeed, two seconds later, our state was updated and our component was only rendered once. This proves that in Rect 18 batching not only inside event handlers, but also inside a setTimeout, and the same is true for promises and other situations.
+
+---
+
+## `How Events Work in React`
+
+Let's now leave the topics of rendering and state and turn towards another essential part of react applications that we haven't really talked about yet, and that's **events**. So in this lecture, we will learn how React handles events and how they work behind the scenes.
+
+But let's start with a quick refresher on how **event propagation** and **event delegation** work in the dom. Because this is important to understand how React works and also because I believe that many people don't have a good grasp on how events actually work in the browser. So let's consider this tree(⤵ image) of dom elements.
+
+![Event propagation and event delegation](./event-propagation-and-event-delegation.jpeg)
+
+And note that this really is a dom tree. So not a Fiber tree or a React element tree. And now let's say that some event happens like a click on one of the 3 buttons. And so here is what's gonna happen in the browser. As soon as the event fires, **a new event object will be created But it will not be created where the click actually happened.**
+
+Instead, the object will be created at the root of the document. So at the very top of the tree. From there, the event will then travel down the entire tree during the so called `capturing phase`. All the way until it reaches the target element. And the target element is simply the element on which the event was actually first triggered.
+
+So at the target, we can choose **to handle the event by placing an event handler function on that element**, which usually is exactly what we do. Then immediately after the target element has been reached, the event object travels all the way back up the entire tree during the so called `bubbling phase`.
+
+Now there are 2 very important things to understand about this process.  
+**The first is that during the capturing and bubbling phase, the event really goes through every single child and parent element one by one.** In fact, it's as if the event originated or happened in each of these dom elements.  
+**The second important thing is that by default, event handlers listen to events not only on the target element but also during the bubbling phase.** So if we put these two things together, it means that every single event handler in a parent element will also be executed during the bubbling phase, as long as it's also listening for the same type of event. For example, if we added another click event handler to the header element, then during this whole process, both the handlers at the target and the header element would be executed when the click happens. Now sometimes we actually don't want this behavior. And so in that case, we can prevent the event from bubbling up any further simply by calling the stop propagation method on the event object. **_e.stopPropagation()_** And this works in vanilla JavaScript and also in React. But it's actually very rarely necessary. So only use this if there really is no other solution.  
+Okay. So this is essentially how events work in the browser.
+
+Now the fact that **events bubble like this allows developers to implement a very common and very useful technique called `event delegation`.** **So with event delegation, we can handle events for multiple elements in one central place, which is one of the parent elements.** So imagine that instead of 3 buttons, there would be like a 1000 buttons. Now if we wanted to handle events on all of them, each button would have to have its own copy of the event handler function which could become problematic for the apps performance and memory usage.
+
+So instead by using event delegation we can simply add just one handler function to the first parent element of these buttons. Then when a click happens on one of the buttons the event will bubble up to the options div in this example, where we can then use the events target property in order to check whether the event originated from one of the buttons or not. And if it did, we can then handle the event in this central event handler function.
+
+_Now if you took my JavaScript course then you will already know how to do this in practice because in fact we do this all the time in vanilla JavaScript applications._  
+However, in React apps it's actually not so common for us to use this technique. But that might leave you wondering, if this is actually not important in React, then **why are we even talking about this?**
+
+Well, for two reasons. **First**, because sometimes you find some strange behaviors related to events in your applications, which might actually have to do with event bubbling. And so as a good React developer you always want to understand exactly what's going on in order to fix these problems. And the **second** reason is that this is actually what React does behind the scenes with our events. And so let's take a look at that(next image).
+
+![How react handles events](./how-react-handle-events.jpeg)
+
+So let's consider this same DOM tree and let's say again that we want to attach an event handler to one of the buttons or even to some other dom element. And this is what that would look like in react code. So we would simply use the on click prop to listen for click events and then pass it a function. So that's really easy, right? Now if we think about how React actually registers these event handlers behind the scenes, we might believe that it would look something like this.
+
+So React might select the button and then add the event handler to that element. So that sounds pretty logical, right? However, this is actually not what React does internally. Instead, **what React actually does is to register this and all other event handler functions to the root dom container. And that root container is simply the dom element in which the React app is displayed.**
+
+So if we use the default of create react app, that's usually the div element with an ID set to root. So again, instead of selecting the button where we actually placed our event handler, we can imagine that React selects the root element and then adds all our event handlers to that element. And I say imagine because the way React does all this behind the scenes is actually a lot more complex than this, but that's not really worth diving into here. The only thing that's worth knowing is that **React physically registers one event handler function per event type. And it does so at the root node of the fiber tree during the render phase.**
+
+So **if we have multiple on click handlers in our code, React will actually somehow bundle them all together and just add one big on click handler to the root node of the fiber tree.** And so this is yet another important function of the Fiber Tree.  
+But anyway, what this means is that behind the scenes, React actually performs event delegation for all events in our applications. So we can say that React delegates all events to the root DOM container because that's where they will actually get handled, not in the place where we thought we registered them. And so this works exactly how in vanilla JavaScript.
+
+So again, whenever a click happens on the button, a new event object is fired off which will then travel down the DOM tree until it reaches the target element. From there the event will bubble back up. Then as soon as the event reaches the root container where react registered all our handlers, the event will actually finally get handled according to whatever handlers match the event and the target element. And finally, once that's all done the event of course continues bubbling up until it disappears into nowhere. And the beauty of this is that it all happens automatically and invisibly just to make our react apps yet a little bit more performant.
+
+**Now just one small detail that I want you to notice is that it's really the dom tree that matters here, not the component tree.** So just because one component is a child of another component, that doesn't mean that the same is true in the displayed DOM tree. So just keep that in mind when thinking about bubbling in React applications.
+
+Alright. So we talked a lot about events and event objects and so now let's finish by taking a look at how these event objects actually work behind the scenes.
+
+![Synthetic Events](./synthetic-events.jpeg)
+
+So whenever we declare an event handler like this one(⤴ image), React gives us access to the event object that was created, just like in vanilla JavaScript. However, in React, this event object is actually different. **So in vanilla JavaScript, we simply get access to the native dom event object.** For example, pointer event, mouse event, keyboard event and many others. **React on the other hand will give us something called a synthetic event, which is basically a thin wrapper around the DOM's native event object.**
+
+And by wrapper we simply mean that synthetic events are pretty similar to native event objects, but they just add or change some functionalities on top of them. So these synthetic events have the same interface as native event objects and that includes the important methods, stop propagation and prevent default.  
+What's special about synthetic events though and one of the reasons why the React team decided to implement them is the fact that they fix some browser inconsistencies, making it so that events work in the exact same way in all browsers.  
+**The React team also decided that all of the most important synthetic events actually bubble, including the focus, blur and change events which usually do not bubble.** **The only exception here is the scroll event which does also not bubble in React.**
+
+Okay. And now to finish, I want to quickly mention some differences between how event handlers work in React and vanilla JavaScript.  
+👉 The first one is that in React, the prop name to attach an event handler are named using camelCase. So something like `onClick` with an upper case C. In HTML on the other hand, it would be `onclick` all lower case. And if we used an add event listener in vanilla JavaScript, the event would simply be called `click`, so without the on prefix.  
+👉 Now, in vanilla JavaScript, whenever we want to stop the default behavior of the browser in response to an event, we can return false from the event handler function. And the big example of that is the browser automatically reloading the page when we submit a form. However, if we would attempt to return false in a React event handler, that would simply not work. So in React, the only way to prevent the browser's default behavior is to call prevent default on the synthetic event object.  
+👉 And finally, in the rare event that you need to handle an event in the capturing phase rather than in the bubbling phase, you can simply attach capture to the event handler name. For example, `onClickCapture` instead of just `onClick`. But most likely you will never use this. So just keep this somewhere in the back of your mind. Alright.
+
+So what we just learned in this last image is basically everything that you need to know in practice in order to successfully work with events in React. The rest all happens invisibly behind the scenes. But I hope that you also found the rest of the lecture interesting and that it gave you even more confidence in working with events in your applications.
+
+---
+
+## `Libraries vs Frameworks and The React Ecosystem`
+
+Alright, and now to finish off this section, let's talk about something entirely different. So this lecture is not really about how React works behind the scenes, but more about what React actually is, which is a library.  
+So for future React developers like you, it's important to understand what it means that **React itself is a library and not a framework.** And so let's now learn about the differences as well as the React ecosystem. And to understand the difference between a framework and a library, let's start with an analogy.
+
+So imagine that you want to make your own sushi for the first time, just like I did recently for the first time as well. So you have two choices about how you want to do it. The first option is to just buy one of those all in one sushi kits which will come with all the ingredients that you need. And so then you don't have to buy anything separately. All you have to do is to assemble these ingredients into your sushi. However, there is also a downside to this because now you're stuck with the ingredients that are included in the kit that you bought. So if you find out that you don't like one of these ingredients, then you still have to use it anyway.
+
+![Analogy Sushi](./analogy-sushi.jpeg)
+
+Now instead of getting an all in one kit, you also have the option to buying all the ingredients separately. And so this will give you complete freedom to choose only the best ingredients and the ones that you like the most. On the other hand, all this freedom can give you decision fatigue because now for each ingredient you need to research which brand is the best option and then you also have to go buy each of the products separately. And even worse, if one of your selected brands changes or is no longer sold, then you need to start the whole process over.
+
+Okay, but probably at this point you're wondering, why is he going on and on about sushi? Well, the reason is that this analogy actually translates beautifully into the difference between building a web application using a framework or using a library. So we could actually just replace the images here and call it a day.
+
+![An analogy framework vs library](./analogy-framwork-vs-library.jpeg)
+
+So we could describe Angular, Vue, or Svelte, as the all in one kit and react as buying separate ingredients.
+
+And the pros and cons of building a web app with each of these approaches are basically exactly the same as in making sushi at home.
+
+Okay, but actually let's now replace these terms with their actual definitions and actually learn what's the difference between a framework and a library.
+
+So in the world of JavaScript, **a framework is basically a complete structure that includes everything that you need in order to build a complete large scale application**. We can say that frameworks like Angular are batteries included because they include stuff like routing, styling, HTTP requests, form management and more all out of the box. Now the downside of this is that you're stuck with the framework's tools and conventions, even if you don't like or agree with them. However, that's actually not always bad. And so this is not a real downside for some developers.
+
+![Framework vs Library](./framework-vs-library.jpeg)
+
+Now on the other hand, we have JavaScript libraries **which are basically pieces of code that developers share for other developers to use.** And the prime example here is of course **React**, which is what we call a **view library**. View because all React does is to draw components onto a user interface, so onto a so called view.
+
+Now if you want to build a large scale single page application, you will need to include many external third party libraries for things like routing, styling, HTTP requests, and so on. So all these functionalities are not part of React itself, unlike what happens with Angular and other frameworks. And so this is how this notion that react is a library ties into the analogy of buying separate ingredients to make sushi. Because to build a react app we have to choose all these separate libraries.
+
+Now don't get me wrong here. We can actually build react apps with just react itself. So without using any libraries. But that only makes sense for small apps or while we are still learning React. **Now being able to choose multiple libraries in order to build your application offers you incredible freedom because you can choose exactly the ones that you like the most. And also every app will have different requirements and so each app will require a different combination of libraries.** And so including all of them in a framework might not even be necessary.
+
+However, on the other hand, the implication of this is that as a React developer, you need to be able to find and download all the right libraries for your specific application. And of course, on top of that, you then need to learn how to use these libraries and even stay up to date with them over time. But don't worry, it's actually not as bad as it may sound. So if you follow this course until the end, you will have a very good understanding of the most important libraries that we usually include into most react projects, which leads me actually to the next point, which is `React's huge third party library ecosystem`.
+
+![React Third Party Library Ecosystem](./react-third-party-library.jpeg)
+
+So React's huge popularity has led to a really, really large ecosystem of libraries that we can include in our react projects for different needs like routing for single page applications, making **HTTP requests**, **managing remote server state**, **managing global application state**, **styling**, **managing forms**, **animations and transitions** and even **entire UI component libraries**. Now I will not go over all of them here one by one because that just takes too much time and you can also just research them if you need. So instead, I will show you which ones I consider the most important libraries and so these are the ones that we will use later in the course. So things like React Router, React Query, Redux, Styled Components or Tailwind. Now many React developers actually do feel overwhelmed by having to take so many decisions and choosing between so many third party libraries.
+
+And so this fact among some other reasons has led to the development of multiple opinionated React Frameworks such as **Next.Js**, **Remix** or **Gatsby**.
+
+So Next.Js or Remix are React frameworks because they are actually built on top of React. So they basically extend React's functionality.
+
+![Frameworks built on top of React](./framworks-build-on-top-of-react.jpeg)
+
+And they are opinionated because other developers basically included their own opinions into how to handle stuff like routing, state management or styling into these frameworks. So where in a traditional React app we have to make decisions about what libraries to include, in an app built with a React framework. Some of these important decisions have already been taken away from you, the developer. And so this makes project development much easier and much faster and it can also lead to a better overall developer experience.
+
+Now different frameworks specialize in different aspects, but all of them offload much of the setup work from you. Also all of them offer many other advantages besides just being opinionated, such as server side rendering or static side generation. In fact, we can even describe many of these frameworks as **full stack React frameworks**, because they include so many features that we can actually build full stack apps with them, all while using React as the base layer. But anyway, this is just a brief overview of React Frameworks. We will learn a lot more about this in the last part of the course where we will actually build a very large project using Next.Js.
+
+Now this will not be included in the course at launch time, but I will include it at a later point. But at this point, I just wanted to let you know that these frameworks exist because, of course, we can only learn about them once we really master React itself and also its most important third party libraries.
+
+---
+
+## `Section Summary`
+
+Welcome to the last lecture of the section. And it was a long and complicated section, I know, but hopefully you enjoyed learning about all these internal workings of React as much as I did. And now to finish, I thought it was a great idea to summarize the key learnings that you should retain from this section. Now this is not a summary of everything that we learned, but only the practical takeaways and conclusions that you will actually need to know in practice. So as you build your own react apps and this is necessary because I've mentioned multiple times that you actually don't need to know all this complicated stuff about how React works behind the scenes. But you do need to know the practical implications of it. And so in this lecture is where I gathered all those practical implications in the form of text slides that you can save and read in the future.
+
+But anyway, let's now move on to our first point which is that **a component is basically like a blueprint for a piece of UI** that will eventually exist on the screen. **When we then use a component, React creates a component instance which is like an actual physical manifestation of a component which contains props, state, effects and more.** So following the analogy of the blueprint, the component is like a blueprint for a house and the component instances are like the actual houses that have been built from that blueprint.
+
+Finally, **a component instance when rendered will return a React element.** Okay, so let's now move on to rendering.
+
+**So in React rendering only means calling component functions and calculating what dom elements need to be inserted, deleted or updated later.** So rendering has nothing to do with actually writing, so with actually updating the dom. **Writing to the dom is actually called committing in the react language.**
+
+So what I want you to remember here is that **each time a component instance is rendered and rerendered, the function is simply called again**.
+
+**But what actually triggers a render to happen?** Well, only the initial app render and state updates can cause a render, which will happen for the entire application. So even though it might look as if only one single component is rendered, the process is actually executed for all components. Now **when a component instance does get rerendered, all its children will get rerendered as well.**
+
+Now this doesn't mean that all children will get updated in the dom because thanks to reconciliation, **React will check which elements have actually changed between the two renders.** Now **one of the main parts of this reconciliation is diffing.**
+
+So **diffing is how React decides which dom elements need to be added or modified later.** Now **if between two renders a certain react element stays at the same position in the elementary, the corresponding dom element and the component state will simply stay the same.** So the dom will not be modified in this case, which is a huge win for performance.
+
+However, **if the element did change to a different position in the tree or if it changed to a different element type altogether then the dom element and the corresponding state will be destroyed.** So they will basically be reset. **Now one cool thing about the diffing algorithm is the fact that we can actually influence it by giving elements a key prop, which then allows React to distinguish between multiple component instances of the same component type.**
+
+So **when the key on a certain element stays the same across renders, the element is kept in the dom even if it appears at a different position in the tree.** And so this is the reason why we need to use keys in lists because it will prevent unnecessary recreations of elements in the dom.
+
+Now on the other hand, **when we change the key between renders the DOM element will be destroyed and rebuilt.** And so this is a very nice trick that we can use in order to reset state, which is sometimes necessary as we saw in two practical examples in this section.
+
+Next, we have one very important rule that you must never ever forget, **which is that you should never declare a new component inside another component.** That's because doing so will recreate that nested component every time the parent component rerenders. So that nested component would always be a new variable basically.
+
+And so this means that React would always see the nested component as a brand new component and therefore reset its state each time that the parent state is updated. Now the reason why this happens is not the important part, but what matters is that **you should always always declare. So you should write new components at the top level of a file, never inside another component.**
+
+Now **the logic that is responsible for creating DOM elements, so basically logic that produces JSX is called render logic.** And this render logic is not allowed to produce any side effects.
+
+So render logic can have no API calls, no timers, no object or variable mutations and no state updates. The only place where side effects are allowed is inside event handlers and inside useEffect.
+
+Okay. Now after all this rendering, **it's time to finally update the DOM, which happens in the commit phase.** However, it's actually not react that does this committing, but a so called **renderer** called reactDom. That's why we always need to include both these libraries in a react web application project. We can also use other renderers to use React on different platforms, for example to build mobile or native applications with React Native.
+
+Alright, and now for the rest of this last slide, let's leave the topics related to rendering behind and quickly talk about state and events.
+
+**So when we have multiple state updates inside an event handler function, all these state updates will be batched. So basically they will happen all at once.** And this is super important because it means that multiple related state updates will only create one rerender, which once again is great for performance.
+
+And since React 18, automatic batching even happens inside timeouts, promises and native event handlers. **Now one super important practical implication of this is that we cannot access a state variable immediately after we update it, which is why we say that state updates are asynchronous.**
+
+Next up, **when we use events inside event handler functions we get access to a so called synthetic event object**, not the browser's native object. So the React team created synthetic events so that events work the exact same way across all browsers.
+
+**And the main difference between synthetic and native events is that most synthetic events do actually bubble. And that includes the focus, blur and change events, which do usually not bubble as native browser events.** **The only exception here is the scroll event.**
+
+Okay, and now finally let's remember that **React is a library and not a framework.** This means that you can basically assemble your applications using your favorite or the community's favorite third party libraries. And this is great for flexibility and creative freedom. The downside of this freedom is that there is an basically infinite amount of libraries that you can choose from. And so you need to first find and then learn all these additional libraries that you need. However, that's not that big of a problem because you will learn about the most commonly used libraries in the main projects of this course.
+
+![Section Summary](./section-summay.jpeg)
+
+---
+
+**_`14-06-2024__1:34 AM`_**
 
 ---
