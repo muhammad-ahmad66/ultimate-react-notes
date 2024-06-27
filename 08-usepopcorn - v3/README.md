@@ -12,6 +12,10 @@
 8. [Refs to Select DOM Elements](#refs-to-select-dom-elements)
 9. [Refs to Persist Data between Renders](#refs-to-persist-data-between-renders)
 10. [What are Custom Hooks When to create One](#what-are-custom-hooks-when-to-create-one)
+11. [Creating our First Custom Hook useMovies](#creating-our-first-custom-hook-usemovies)
+12. [Creating useLocalStorageState](#creating-uselocalstoragestate)
+13. [Creating useKey](#creating-usekey)
+14. [Coding Challenge_UseGeoLocation](#coding-challenge_usegeolocation)
 
 ---
 
@@ -661,20 +665,550 @@ And later on we will even see some other more real world use cases of refs, for 
 
 ## `What are Custom Hooks When to create One`
 
-Welcome back. So the last part of this section is all about custom hooks. And so let's start by understanding what custom hooks are and when to create 1. Now custom hooks are all about reusability. And in React, we have basically 2 types of things that we can reuse, a piece of UI or a piece of logic.
+The last part of this section is all about **custom hooks**. And so let's start by understanding what custom hooks are and when to create one.  
+Now **custom hooks are all about reusability.** **And in React, we have basically two types of things that we can reuse, a **piece of UI** or a **piece of logic**.**
 
-That's it. That's how the things that we can reuse. Now if we want to reuse a piece of UI, we already know that we use a component. On the other hand, if you want to reuse logic, in React you first need to ask the question, does the logic that I want to reuse have any hooks? If not, all you need is a regular function, which can live either inside or outside of your component.
+Now if we want to reuse a piece of UI, we already know that we use a component. On the other hand, **if we want to reuse logic, in React you first need to ask the question, does the logic that I want to reuse have any hooks?** **If not, all you need is a regular function, which can live either inside or outside of your component.**
 
-However, if the logic does contain any react hook, you cannot just extract the logic into a regular function. Instead, what you need to create is a custom hook. So basically, custom hooks allow us to reuse stateful logic among multiple components. And actually, not only stateful logic but really any logic that contains 1 or more React Hooks. So we can say that custom hooks allow us to reuse non visual logic, which is a more generic term.
+However, **if the logic does contain any react hook, we cannot just extract the logic into a regular function.** Instead, what we need to create is, a custom hook. So basically, **custom hooks allow us to reuse stateful logic among multiple components. And actually, not only stateful logic but really any logic that contains 1 or more React Hooks.**  
+**_`So we can say that custom hooks allow us to reuse non visual logic, which is a more generic term.`_**
 
-Now just like regular functions or components or effects, one hook should only have one purpose. So it should only do one specific well defined thing. So the idea is not to simply put all the hooks of a component into a custom hook and call it a day. No, the idea is to make custom hooks reusable and portable so that you can even use them in completely different projects. And actually now that we have had hooks for so many years in React, developers have started to share their custom hooks with the world.
+**Just like regular functions or components or effects, one hook should only have one purpose.** So it should only do one specific well defined thing.  
+So the idea is not to simply put all the hooks of a component into a custom hook and call it a day. the idea is to **make custom hooks reusable and portable** so that you can even use them in completely different projects. And actually now that we have had hooks for so many years in React, developers have started to share their custom hooks with the world.
 
-And so there are now lots of custom hook libraries that you can download from NPM and use in your projects. Now since custom hooks are made out of regular React Hooks, the rules of hooks that we learned about before still apply to them as well. Okay. But now let's look at an actual custom hook so that we can learn just a bit more about them. So first, a custom hook is really just a JavaScript function.
+**And so there are now lots of custom hook libraries that you we download from NPM and use in your projects.** Now since custom hooks are made out of regular React Hooks, the rules of hooks that we learned about before still apply to them as well.
 
-So it can receive and return any data that is relevant to this custom hook. In fact, it's very common to return an object or an array from a custom hook. And notice how this is different from components which are also just regular JavaScript functions but which can only receive props and always have to return some JSX. Now, the difference between regular functions and custom hooks is that custom hooks need to use 1 or more React Hooks. So this custom hook here, for example, uses 2 use state and one use effect hook to abstract a simple fetch functionality into this custom hook.
+But now let's look at an actual custom hook so that we can learn just a bit more about them.  
+So first, **a custom hook is really just a JavaScript function.** So it can receive and return any data that is relevant to this custom hook. In fact, it's very common to return an object or an array from a custom hook.  
+**And notice how this is different from components which are also just regular JavaScript functions but which can only receive props and always have to return some JSX.**
 
-And finally, in order for us and react to recognize this function as an actual hook, the function name needs to start with the word use. So just like all the built in React Hooks. So in this example, that's use fetch and this is really not optional. So you need to give the function a name starting with use. Otherwise, it's gonna be just a regular function in the eyes of React.
+**The difference between regular functions and custom hooks is that custom hooks need to use one or more React Hooks.** So this custom hook (see in image⤵), for example, uses 2 useState and one useEffect hook to abstract a simple fetch functionality into this custom hook.
+
+And finally, in order for us and react to recognize this function as an actual hook, **the function name needs to start with the word use.** So just like all the built in React Hooks. So in this example, that's useFetch **and this is really not optional.** So we need to give the function a name starting with use. Otherwise, it's gonna be just a regular function in the eyes of React.
+
+![Reusing logics with Custom Hooks](./ss/reusing-logics-with-custom-hooks.jpeg)
 
 Alright. And that's all the theory that you need to know about custom hooks. And so let's now go build ourselves some custom hooks for the rest of this section.
+
+---
+
+## `Creating our First Custom Hook useMovies`
+
+And as our first custom hook, let's start with a hook called useMovies.  
+**There are basically 2 strategies to decide if we want to create a new custom hook.**
+
+1. The first one is that we want to **reuse some part of our non visual logic.** So just as we learned in the previous lecture.
+2. And the second factor might be that we simply want to **extract a huge part of our component out into some custom hook.** And so that's actually what we will do in this lecture. So we will take this useEffect here which fetches our movie data and we will extract it into a hook called useMovies. And so then we get rid of all of this code here in our component. And of course if you wanted we could then later reuse this hook in some other project. Okay.
+
+So in this lecture I will show you how we can extract all the stateful logic that belongs together into a nice and well packaged custom hook. So let's do that. And actually for that I will create a brand new file here in our source and I will then call it useMovies.js. Okay. And from here we will export a function which is going to be our custom hook called exactly useMovies.
+
+Okay. And notice that here we're not doing an export default but a named export. And so that's kind of a strategy that I like to use. **So using default exports for components like for our App component, and using named exports for custom hooks.** Now that's not really mandatory but that's just the way I like to do it.
+
+### `App component before extracting useEffect function`
+
+```js
+export default function App() {
+  const [movies, setMovies] = useState([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [query, setQuery] = useState("");
+  const [selectedId, setSelectedId] = useState(null);
+
+  // const [watched, setWatched] = useState([]);
+  const [watched, setWatched] = useState(function () {
+    const storedData = localStorage.getItem("watched");
+    return storedData ? JSON.parse(storedData) : [];
+  });
+
+  function handleSelectMovie(id) {
+    setSelectedId((selectedId) => (id === selectedId ? null : id));
+  }
+
+  function handleCloseMovie() {
+    setSelectedId(null);
+  }
+
+  function handleAddWatched(movie) {
+    setWatched((watched) => [...watched, movie]);
+
+    // localStorage.setItem("watched", JSON.stringify([...watched, movie]));
+  }
+
+  function handleDeleteWatched(id) {
+    setWatched((watched) => watched.filter((movie) => movie.imdbID !== id));
+  }
+
+  useEffect(
+    function () {
+      localStorage.setItem("watched", JSON.stringify(watched));
+    },
+    [watched]
+  );
+
+  useEffect(
+    function () {
+      const controller = new AbortController();
+
+      async function fetchMovies() {
+        try {
+          setIsLoading(true);
+          setError("");
+
+          const url = `https://api.allorigins.win/get?url=${encodeURIComponent(
+            `https://www.omdbapi.com/?apikey=${apiKey}&s=${query}`
+          )}`;
+
+          const response = await fetch(url, { signal: controller.signal });
+
+          if (!response.ok)
+            throw new Error("Something went wrong with fetching movies.");
+
+          const data = await response.json();
+          // console.log(data);
+
+          if (JSON.parse(data.contents).Response === "False")
+            throw new Error("Movie not found");
+          setMovies(JSON.parse(data.contents).Search);
+          setError("");
+          console.log(JSON.parse(data.contents).Search);
+          setIsLoading(false);
+        } catch (err) {
+          // console.error(err.message);
+
+          if (err.name !== "AbortError") {
+            setError(err.message);
+          }
+        } finally {
+          setIsLoading(false);
+        }
+      }
+
+      if (query.length < 3) {
+        setMovies([]);
+        setError("");
+        return;
+      }
+
+      handleCloseMovie();
+      fetchMovies();
+
+      return function () {
+        controller.abort();
+      };
+    },
+    [query]
+  );
+
+  // setWatched([]); // Infinite loop
+
+  return (
+    <>
+      <NavBar>
+        <Logo />
+        <Search query={query} setQuery={setQuery} />
+        <NumResults movies={movies} />
+      </NavBar>
+      <Main>
+        <Box>
+          {/* {isLoading ? <Loader /> : <MovieList movies={movies} />} */}
+          {isLoading && <Loader />}
+          {!isLoading && !error && (
+            <MovieList movies={movies} onSelectMovie={handleSelectMovie} />
+          )}
+          {error && <ErrorMessage message={error} />}
+        </Box>
+        <Box>
+          {selectedId ? (
+            <MovieDetails
+              selectedId={selectedId}
+              onCloseMovie={handleCloseMovie}
+              onAddWatched={handleAddWatched}
+              watched={watched}
+            />
+          ) : (
+            <>
+              <WatchedSummary watched={watched} />
+              <WatchedMovieList
+                watched={watched}
+                onDeleteWatched={handleDeleteWatched}
+              />
+            </>
+          )}
+        </Box>
+      </Main>
+    </>
+  );
+}
+```
+
+And so let's start by extracting useEffect(huge one(last)). So give it a save and immediately we see that we are missing all of these state variables. So in this case, the state setter functions. And so that's because fetching the movies requires a lot more than just this useEffect.
+
+So notice how we actually also need multiple state variables. So the `movies` `isLoading` and `error`. All of them are necessary to make the functionality of fetching movies work. And so let's also extract them from here and paste them where they are necessary. Okay. And then we just have some problems with importing. So import, useState, and useEffect from react.
+
+Okay. So that's looking already better but we still have some missing information right here. So we're missing the key and we're missing the query. So to fix that we can simply accept the query as a parameter to our function. And so now remember that this really is a function. This is not a component and so here we don't accept props but really we accept, arguments like this.
+
+**What exactly should we actually return from this custom hook?** Well, basically we want to return everything that we need in the App. So basically all the variables that somewhere in our JSX are necessary. And so that's basically exactly the three pieces of state that we just cut from App. So it's the `movies`, the `error` and the `isLoading` state because again we will need these somewhere here in our JSX. And so that's basically what we will want this custom hook to return. And so let's return them from here.
+
+```js
+return { movies, error, isLoading };
+```
+
+Yeah. So right after the useEffect, we will return and we will place them all into one object. So it could be an array as well but it's very common to just return an object especially when we have so many different things like movies, isLoading and error.
+
+Okay. And so now all we have to do is to then in App component when we're calling this function(custom hook), get the data that is returned and destructure them into their own variables again. So that movies, isLoading and error.
+
+```js
+const { movies, error, isLoading } = useMovies(query);
+```
+
+And so that's actually it. So again, here we are returning these three pieces of information. So these state variables that we are going to need outside of this custom hook. And so basically then this returns an object which we then immediately destructure.
+
+---
+
+And so if we give this a save and try this now then you see that it's working just like before. The only difference right now is that when we select a movie here and then we search for another one, then this one(that's already opened previously) is not closed. And so that's because we are no longer calling handleCloseMovie function. **So what should we do about it?**
+
+Well, we can just leave it as it is right now, in order to make this really reusable or we could also accept a callback function that the user of this custom hook can pass in if they want and then we can call that at the very beginning. And so this is a way of customizing this custom hook a little bit more.  
+So we can think of these arguments(of custom hook) a bit like the public API of this custom hook. So just like we can think of props as the custom API of a component. So a custom hook like this can also be created by someone and then consumed by someone else. And so that's the whole point of creating reusable pieces of stateful logic.
+
+And just to make this a bit more clear, we can call this callback function at the very beginning of our effect. So we can say callback and then we only want to call it if it actually exists. And so we can basically do optional chaining on calling a function as well. So that's just like this: **`callback?.();`**  
+And so now this function will only be called if it actually exists. So without this optional chaining part here we would first have to check if it does exist and then we would call it.
+
+So if we now try this again since we didn't pass in any callback yet, this will then work without problems. So you see no problems there but now we can actually pass in that callback which is handleCloseMovie. `const { movies, error, isLoading } = useMovies(query, handleCloseMovie);` **And we can use this function here before it is actually defined because remember that in JavaScript function declarations like this are hoisted.** So one of the reasons why I always prefer function declarations.
+
+**`QUICK RECAP`**  
+And now let's just quickly recap what we did here.  
+So basically, we took all the logic that belongs together to search for movies and simply placed it here into this custom hook. And notice that we used 4 hooks to achieve that result. So one useEffect and 3 useStates. And that's important because remember **a custom hook actually needs to use at least one React hook. Otherwise, it's just a regular function,**
+
+So we took all the logic that belongs together, packed it here into this one function and then returned everything that is necessary for the app to keep working in exactly the same way as before.
+
+```JS
+// useMovies_Custom Hook
+
+import { useState, useEffect } from "react";
+
+const apiKey = "f84fc31d";
+
+export function useMovies(query, callback) {
+  const [movies, setMovies] = useState([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState("");
+
+  useEffect(
+    function () {
+      callback?.();
+
+      const controller = new AbortController();
+
+      async function fetchMovies() {
+        try {
+          setIsLoading(true);
+          setError("");
+
+          const url = `https://api.allorigins.win/get?url=${encodeURIComponent(
+            `https://www.omdbapi.com/?apikey=${apiKey}&s=${query}`
+          )}`;
+
+          const response = await fetch(url, { signal: controller.signal });
+
+          if (!response.ok)
+            throw new Error("Something went wrong with fetching movies.");
+
+          const data = await response.json();
+          // console.log(data);
+
+          if (JSON.parse(data.contents).Response === "False")
+            throw new Error("Movie not found");
+          setMovies(JSON.parse(data.contents).Search);
+          setError("");
+          console.log(JSON.parse(data.contents).Search);
+          setIsLoading(false);
+        } catch (err) {
+          // console.error(err.message);
+
+          if (err.name !== "AbortError") {
+            setError(err.message);
+          }
+        } finally {
+          setIsLoading(false);
+        }
+      }
+
+      if (query.length < 3) {
+        setMovies([]);
+        setError("");
+        return;
+      }
+
+      // handleCloseMovie();
+      fetchMovies();
+
+      return function () {
+        controller.abort();
+      };
+    },
+    [query]
+  );
+
+  return { movies, error, isLoading };
+}
+
+
+```
+
+```js
+// Calling useMovies Hook
+const { movies, error, isLoading } = useMovies(query, handleCloseMovie);
+```
+
+---
+
+## `Creating useLocalStorageState`
+
+In this lecture, we're going to create a new custom hook called useLocalStorageState, which basically will behave exactly like the use state hook but where the state actually gets stored in local storage.  
+And so with that hook, we will then be able to replace watch state. So this state which gets the initial value from use state or from local storage actually, plus the useEffect, which is responsible for storing the state in local storage. Okay. So right in our source folder, let's create a new file `useLocalStorageState.js`.
+
+Okay. So export and then again use local storage state. Now some people would probably just call this, useLocalStorage, but I want to make it really clear that the idea of this hook is to work in the exact same way as the use state hook. But now let's come back here And in order for us to know how we should design our hook, let's first call it.
+
+So as I mentioned, I want this hook to work basically the same way as the useState hook. And so it should also return an array of the state. So let's call it watched and a setter function, so setWatched. And then we want to pass in the initial state which remember for the watched array was simply this empty array.
+
+```js
+// calling from App
+const [watched, setWatched] = useLocalStorageState([]);
+```
+
+And so first of all, we can specify the parameter. So the parameter here is basically the initial state.
+
+And now here I want to give these variables(watched and setWatched) some more generic names because remember that the idea of this hook here is to easily reuse it in other projects. So let's just call this `value` and then `setValue`. Now, right now we simply have a custom hook which sets some state and reads the state from local storage. But that's not super helpful yet because of course we also need to update the state in local storage. So we also need to get this useEffect that update the localStorage.
+
+Now there's still one big problem here which is that we have this key here hard coded as `watched`. So of course, this needs to be reusable and generic. And so therefore, we need to allow the user to pass in the name of the key. So this is not 100% similar to useState anymore but this is really necessary. Otherwise, this cannot work.
+
+Okay. And now to return, we simply return an array which has the value and setValue. And so then it works exactly like the use date hook.
+
+So here in App we already destructured that result so that array again into the state variable and into the stateSetter. Now here we just need to pass in that key. So that's watched.
+
+And so we need to say here basically, if there is a stored value, then return this and otherwise then return the initial state, which in this case is going to be that empty array.
+
+```js
+return storedData ? JSON.parse(storedData) : initialState;
+```
+
+So remember that whatever this function here returns will be the initial state value of this useState hook. And so then at the very beginning value becomes this empty array. And then as this effect here is executed after the re render that value is already that empty array. And so that's what is then stored here into our local storage. Okay.
+
+So what we did again was to take all the code that belonged together and placed it into yet another hook. And in this case we made it so that this hook looks as close as possible to the useState hook. So we also pass in some initial state and then we get back a state variable and the updater function as always. But thanks to our special custom hook, now these work a bit different.
+
+```js
+// useLocalStorageState Custom Hook
+
+import { useState, useEffect } from "react";
+
+export function useLocalStorageState(initialState, key) {
+  const [value, setValue] = useState(function () {
+    const storedData = localStorage.getItem(key);
+    return storedData ? JSON.parse(storedData) : initialState;
+  });
+
+  useEffect(
+    function () {
+      localStorage.setItem(key, JSON.stringify(value));
+    },
+    [value, key]
+  );
+
+  return [value, setValue];
+}
+```
+
+```javascript
+// Calling useLocalStorageState custom hook
+
+const [watched, setWatched] = useLocalStorageState([], "watched");
+```
+
+---
+
+## `Creating useKey`
+
+To finish this section, let's now create another custom hook called useKey, which will abstract the functionality of attaching and removing an event handler for a key press.  
+So here in the MovieDetails component, we have that functionality that if we open a movie and then hit the Escape key then it will close the movie. And so we implemented that using a useEffect hook. And so since this is using a React hook we can abstract this into its own custom hook because actually we do something very similar to focus on the search bar. And so that is using basically some similar functionality. And so it's a good idea to abstract this functionality into a custom hook and then reuse that in both these places. So let's copy this code here. Let's create another file for another custom hook. So this one is called `useKey.js`.
+
+**And so now what do we actually need as inputs to this custom hook?** Well, this one is actually the easiest one of all because this one doesn't need to return anything and all we need is to know what should happen.
+
+So basically we need a callback function(action) and key. So we want the key, for example, in this case here, that would be the Escape key. And a callback function for what action should be executed whey a user pressed the Escape key, so in this case it would be onCloseMovie().
+
+Then we also need the key and action in dependency array. Always make sure to include every single variable that is used into your effect.
+
+Now here we just need one small fix so to say because the user might pass in this key, like, in different formats.
+
+**So they might write escape all in lowercase or maybe uppercase. And so what we should do here is to just transform key that they pass in to lowercase and then also the code that we get from the event to lowercase as well so that we can then correctly compare them.** And that's a pretty normal thing to do when we compare strings.
+
+And so this should at this point already be working. So let's come back in MovieDetails component in App.js and then let's use useKey hook.
+
+And so here we now need to pass in the key. So that's in this case the escape key. And the action will be on closeMovie. **`useKey("Escape", onCloseMovie);`**
+
+So our custom hook is working. And so let's now immediately reuse it in this search component.
+
+let's now again use useKey here in Search component. And so this time the key that we are looking for is the Enter key like this. But now as for the callback function, this is actually a little bit more tricky because watch at what we have here as the callback function. So we have all this ⤵. Second if block is already in the custom hook. So where it compares the pressed key with the key that we're interested in here.
+
+```js
+function callback(e) {
+  if (document.activeElement === inputEl.current) return;
+
+  if (e.code === "Enter") {
+    inputEl.current.focus();
+    setQuery("");
+  }
+}
+```
+
+```js
+// Calling from Search component
+
+const inputEl = useRef(null);
+
+useKey("Enter", function () {
+  if (document.activeElement === inputEl.current) return;
+
+  inputEl.current.focus();
+  setQuery("");
+});
+```
+
+So hitting the enter key and yes, that works just as well. So here the callback function.
+
+Anyway, we finished now this application and this section as well.
+
+**`CODE`**
+
+```js
+// useKey Custom Hook (useKey.js)
+
+import { useEffect } from "react";
+
+export function useKey(key, action) {
+  useEffect(
+    function () {
+      function callback(e) {
+        if (e.code.toLowerCase() === key.toLowerCase()) {
+          action();
+        }
+      }
+
+      document.addEventListener("keydown", callback);
+
+      return function () {
+        document.removeEventListener("keydown", callback);
+      };
+    },
+    [action, key]
+  );
+}
+```
+
+```js
+// CALLING useKey CUSTOM HOOK
+
+// From MovieDetails component
+useKey("Escape", onCloseMovie);
+
+// From Search component
+const inputEl = useRef(null);
+useKey("Enter", function () {
+  if (document.activeElement === inputEl.current) return;
+
+  inputEl.current.focus();
+  setQuery("");
+});
+```
+
+---
+
+## `Coding Challenge_UseGeoLocation`
+
+In this challenge, let's practice creating a custom hook based on some code that is already working. So here we have a very simple application which all it does is to get your position using geolocation as soon as you click on this button. So when you click here, your browser will then automatically ask for your permission and then when you allow, it will give you your GPS position and the link which you can click and which will bring you to the open street map application on your location. Okay. Also the app then clicks how many times you have requested your position.
+
+So my task for you now is to extract this logic into a custom hook called useGeolocation and then use that custom hook to make this component work again.
+
+And so this state right here(that count how many clicks happen on the `get my position` button.) might not really be relevant to this custom hook. So this custom hook should really only contain the logic that is about getting the position from geolocation. And so that's what I want you to think about while you're doing this exercise. So again, basically make sure to not include this state here which indicates how many times the button has been clicked. So that's a small additional challenge but I'm sure you can do it.
+
+So basically we take all the non visual logic, so all the logic that contains some react hooks and which is relevant to a certain thing, in this case, that thing is to use geolocation. So then we took 3 state variables and also this event handler function(getPosition) and then returned all of that from our hook and used it in App. And so then we encapsulated all of those states and all the logic inside this custom hook.
+
+### `CODE`
+
+```js
+import { useState } from "react";
+
+function useGeolocation() {
+  const [isLoading, setIsLoading] = useState(false);
+  const [position, setPosition] = useState({});
+  const [error, setError] = useState(null);
+
+  function getPosition() {
+    if (!navigator.geolocation)
+      return setError("Your browser does not support geolocation");
+
+    setIsLoading(true);
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        setPosition({
+          lat: pos.coords.latitude,
+          lng: pos.coords.longitude,
+        });
+        setIsLoading(false);
+      },
+      (error) => {
+        setError(error.message);
+        setIsLoading(false);
+      }
+    );
+  }
+
+  return { isLoading, position, error, getPosition };
+}
+
+export default function App() {
+  const {
+    isLoading,
+    position: { lat, lng }, // Nested destructuring
+    error,
+    getPosition,
+  } = useGeolocation();
+
+  const [countClicks, setCountClicks] = useState(0);
+
+  function handleClick() {
+    setCountClicks((count) => count + 1);
+    getPosition();
+  }
+
+  return (
+    <div>
+      <button onClick={handleClick} disabled={isLoading}>
+        Get my position
+      </button>
+
+      {isLoading && <p>Loading position...</p>}
+      {error && <p>{error}</p>}
+      {!isLoading && !error && lat && lng && (
+        <p>
+          Your GPS position:{" "}
+          <a
+            target="_blank"
+            rel="noreferrer"
+            href={`https://www.openstreetmap.org/#map=16/${lat}/${lng}`}
+          >
+            {lat}, {lng}
+          </a>
+        </p>
+      )}
+
+      <p>You requested position {countClicks} times</p>
+    </div>
+  );
+}
+```
+
+---
+
+**_`28/06/2024`_**
 
 ---

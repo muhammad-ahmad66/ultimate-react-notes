@@ -1,10 +1,11 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
 import "./index.css";
-import App from "./App";
+// import App from "./App";
 import StarRating from "./StarRating";
 // import ExpendingText from "./ExpendingText";
 // import App from "./currency-converter";
+import App from "./useGeolocation";
 
 import { useState } from "react";
 

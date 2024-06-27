@@ -1,5 +1,8 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import StarRating from "./StarRating";
+import { useMovies } from "./useMovies";
+import { useLocalStorageState } from "./useLocalStorageState";
+import { useKey } from "./useKey";
 
 const average = (arr) =>
   arr.reduce((acc, cur, i, arr) => acc + cur / arr.length, 0);
@@ -9,17 +12,21 @@ const tempQuery = "interstellar";
 // const query = "jkjkjkjlk";
 
 export default function App() {
-  const [movies, setMovies] = useState([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState("");
   const [query, setQuery] = useState("");
   const [selectedId, setSelectedId] = useState(null);
 
-  // const [watched, setWatched] = useState([]);
+  const { movies, error, isLoading } = useMovies(query, handleCloseMovie);
+
+  const [watched, setWatched] = useLocalStorageState([], "watched");
+
+  /*
+  PLACED IN useLocalStorageState.js
+  const [watched, setWatched] = useState([]);
   const [watched, setWatched] = useState(function () {
     const storedData = localStorage.getItem("watched");
     return storedData ? JSON.parse(storedData) : [];
   });
+  */
 
   function handleSelectMovie(id) {
     setSelectedId((selectedId) => (id === selectedId ? null : id));
@@ -32,73 +39,22 @@ export default function App() {
   function handleAddWatched(movie) {
     setWatched((watched) => [...watched, movie]);
 
-    // localStorage.setItem("watched", JSON.stringify([...watched, movie]));
+    /*
+    PLACED IN useLocalStorageState.js
+    localStorage.setItem("watched", JSON.stringify([...watched, movie]));
+    */
   }
 
   function handleDeleteWatched(id) {
     setWatched((watched) => watched.filter((movie) => movie.imdbID !== id));
   }
 
-  useEffect(
-    function () {
-      localStorage.setItem("watched", JSON.stringify(watched));
-    },
-    [watched]
-  );
-
-  useEffect(
-    function () {
-      const controller = new AbortController();
-
-      async function fetchMovies() {
-        try {
-          setIsLoading(true);
-          setError("");
-
-          const url = `https://api.allorigins.win/get?url=${encodeURIComponent(
-            `https://www.omdbapi.com/?apikey=${apiKey}&s=${query}`
-          )}`;
-
-          const response = await fetch(url, { signal: controller.signal });
-
-          if (!response.ok)
-            throw new Error("Something went wrong with fetching movies.");
-
-          const data = await response.json();
-          // console.log(data);
-
-          if (JSON.parse(data.contents).Response === "False")
-            throw new Error("Movie not found");
-          setMovies(JSON.parse(data.contents).Search);
-          setError("");
-          console.log(JSON.parse(data.contents).Search);
-          setIsLoading(false);
-        } catch (err) {
-          // console.error(err.message);
-
-          if (err.name !== "AbortError") {
-            setError(err.message);
-          }
-        } finally {
-          setIsLoading(false);
-        }
-      }
-
-      if (query.length < 3) {
-        setMovies([]);
-        setError("");
-        return;
-      }
-
-      handleCloseMovie();
-      fetchMovies();
-
-      return function () {
-        controller.abort();
-      };
-    },
-    [query]
-  );
+  // useEffect(
+  //   function () {
+  //     localStorage.setItem("watched", JSON.stringify(watched));
+  //   },
+  //   [watched]
+  // );
 
   // setWatched([]); // Infinite loop
 
@@ -175,6 +131,16 @@ function Search({ query, setQuery }) {
 
   // Now exact same thing, but using a Ref hood
   const inputEl = useRef(null);
+
+  useKey("Enter", function () {
+    if (document.activeElement === inputEl.current) return;
+
+    inputEl.current.focus();
+    setQuery("");
+  });
+  /*
+  PLACED IN useKey CUSTOM HOOK
+
   useEffect(
     function () {
       function callback(e) {
@@ -195,6 +161,7 @@ function Search({ query, setQuery }) {
     },
     [setQuery]
   );
+  */
 
   return (
     <input
@@ -332,6 +299,8 @@ function MovieDetails({ selectedId, onCloseMovie, onAddWatched, watched }) {
     // setAvgRating((avgRating) => (avgRating + userRating) / 2);
   }
 
+  /*
+  PLACED IN useKey CUSTOM HOOK
   useEffect(
     function () {
       function callback(e) {
@@ -348,6 +317,9 @@ function MovieDetails({ selectedId, onCloseMovie, onAddWatched, watched }) {
     },
     [onCloseMovie]
   );
+  */
+
+  useKey("Escape", onCloseMovie);
 
   useEffect(
     function () {
