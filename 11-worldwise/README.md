@@ -19,6 +19,7 @@
 14. [Dynamic Routes with URL parameters](#dynamic-routes-with-url-parameters)
 15. [Reading and Setting a Query String](#reading-and-setting-a-query-string)
 16. [Programmatic Navigation with useNavigate](#programmatic-navigation-with-usenavigate)
+17. [Programmatic Navigation with Navigate](#programmatic-navigation-with-navigate)
 
 ---
 
@@ -1163,8 +1164,6 @@ Next up, let's learn about programmatic navigation with the `useNavigate` custom
 
 Now in this example what I want to do is that whenever the user clicks somewhere in the Map Component we then want to move automatically to the Form component. And clicking on Map cannot really happen with a Link, and so that's why we need programmatic navigation.
 
----
-
 But first of all create a route for form.
 
 ```jsx
@@ -1237,8 +1236,6 @@ export default Form;
 So here we have our form, but at this point we have no way of moving to this URL, so to _app/form_. We now want that to happen when the user clicks somewhere on the Map.  
 So let's do that. And so let's attach an event handler onClick on map container.
 
----
-
 Now we need to actually use the useNavigate hook. So another hook that is provided by React Router. And all this one does is to return a function called navigate. And so then we can use this function to basically move to any URL. So we just need to call that. Just like this:
 
 ```jsx
@@ -1252,36 +1249,92 @@ const navigate = useNavigate(); // return a function
 >
 ```
 
-And so let's say we want to move to the form, and that's it. So let's go somewhere else. At least it should be here in the app. And so now let's see what happens when I click somewhere here, and indeed it did move to the form. So without us having to click on any link.
+So here we do it in an imperative way because we cannot use the Link in this situation to go to another url or page. And the same, after submitting a form.
 
-So this is programmatic navigation where we basically, in an imperative way, navigate to this URL. So here in enough, we do that also. So we also navigate to another page but in a declarative way because we just declare this component in our JSX and that will then do the work of navigating to the city's URL for us. But in this case again we do it in an imperative way because we cannot use the link in this situation. And the same again, after submitting a form.
+**So this is one use case of the navigate function but we can also do something else** which is to **simply navigate back** **which is in fact something that we cannot do just with Links.** So let's try that out by coming to the Form. And so here we actually have a button to go back, and so now we want to implement that functionality.
 
-So then we would have to also call this navigate function. And so we will do that later. So this is one use case of the navigate function but we can also do something else which is to simply navigate back which is in fact something that we cannot do just with links. So let's try that out by coming here to the form. And so here we actually have a button to go back, and so now we want to implement that functionality.
+But before we do that we now want to create a **reusable button component**. So let's create a new component file, Button.jsx. So we need the children prop so that we can pass in some content. Then we also need to accept the onClick prop. And finally, we also want to accept a type string. And so using that type we then want to conditionally add a CSS class. So this means that now we need to add two classNames. And the way we do that in CSS modules is that we need to create a template literal. One will be `styles.btn` and another will be `styles[type]`.
 
-But before we do that I now want to create actually a reusable button component. So let's create a new file here, button.jsx, and here it is now a button element and then let's see what we need here as props. So we need the children prop so that we can pass in some content. Then we also need to accept the on click prop. And finally, here I also want to accept a type string.
+```jsx
+// Button component
+import styles from "./Button.module.css";
+function Button({ children, onClick, type }) {
+  return (
+    <button onClick={onClick} className={`${styles.btn} ${styles[type]}`}>
+      {children}
+    </button>
+  );
+}
+export default Button;
 
-And so using that type I then want to conditionally add a CSS class. But let me show that to you in the end. So first let's do our typical things which is to allow the user to attach an on click event handler to this button. Okay. Then we also need to get in our styles and then let's add the class name here, styles.btn.
+```
 
-Okay. So let's come back here and use that button. And for now we don't pass in here the on click event handler as we will do that later. So here we got some styling already but that is not enough. So let's come here to the CSS module for the button and notice that besides the button class we have these 3 other classes.
+And so now we want to allow the user to pass in a type which can be either primary or back or position. And then according to that we will add the corresponding class.  
 
-And so now we want to allow the user to pass in a type which can be either primary or back or position. And then according to that we will add the corresponding class. So what I mean is this. So instead of now manually passing in here a class name we just pass in a string with the type of button that we want. So here we want a primary button.
+```jsx
+// Calling Button component
+<div className={styles.buttons}>
+  <Button type="primary">Add</Button>
+  <Button type="back">&larr; Back</Button>
+</div>
+```
 
-And so then here we receive that inside the button as the type and then we will use that as a class name here. So this means that now we need to add 2 class names. And the way we do that in CSS modules is that we need to create a template literal. So let's wrap this first in backticks then into this, curly braces. And then here let's do the other one.
+And beautiful. So we basically dynamically now selected the style that we want using this type prop string.
 
-So for example, here we could say now styles dot primary. And so then all the buttons would get green like this because the primary is the one with the green background. But remember that actually here we want the type. And so, here we now need to do it like this, and so here we get indeed the primary type but if we use now the back button, so let's do that, Then we will get another style. So type off back and then let's see what we get.
+And now finally let's attach the onClick handler on button in Form components, so that we can again use the navigate function. So let's include our custom hook again. So useNavigate from React Router dom.  
+_And by the way this used to be called useHistory in a previous version of React Router._
 
-And beautiful. So we basically dynamically now selected the style that we want using this type prop string. So let's close that, and now finally let's attach the on click handler here so that we can again use the navigate function right here now. So let's include our custom hook again. So use navigate from react router dom and by the way this used to be called use history in a previous version of React router.
+**And so now we want to navigate back. So how do we do that?** Well, **we just need to define basically the number of steps that we want to go back in the browser's history.** So if we say -1, then that means that we basically navigate back.
 
-And so now we want to navigate back. So how do we do that? Well, we just need to define basically the number of steps that we want to go back in the browser's history. So if we say minus 1, then that means that we basically navigate back. So let's try that out here and moving to cities.
+```jsx
+<Button
+  type="back"
+  onClick={(e) => {
+    e.preventDefault();
+    navigate(-1);
+  }}
+>
+  &larr; Back
+</Button>
+```
 
-And then as I click here that will open the form. And so now when I click here we should move back to cities. Right? Well, that didn't really work. I mean, maybe you saw a flash of this moving back but then it reloaded the page here again.
+Yeah it's working. And of course, we could also move forward by doing plus 1 or we could move back twice by doing minus 2, but usually what we always need is just like this, so minus 1.
 
-And so the reason for that is that this button is located inside a form. So we are inside a form and so therefore this will trigger the form to be submitted. And so that will then cause the page to reload. So what we also need to do here is to prevent default. So we need to receive the event and then we need to do e dot prevent default.
+Okay. And that's actually it. That is programmatic navigation for you.
 
-And so this will then prevent this button as it is clicked to submit this form. So let's try that again. Clicking here will open this, and now as we move back we are back here in this URL. And if I go to countries then click here again and click back then we move back to countries. And of course, we could also move forward by doing plus 1 here or we could move back twice by doing minus 2, but usually what we always need is just like this.
+---
 
-Okay. And that's actually it. That is programmatic navigation for you. Now here I'm just noticing we have some problem. So something with the country list.
+## `Programmatic Navigation with Navigate`
 
-So country list, I remember that we removed the key from here but we never put it back. So let's just use the country dot country which is unique in this situation. So let's reload and then we get no more error.
+So we learned about how to programmatically navigate using the **useNavigate hook**, but there is also a declarative way of doing that. And so let's now check out the **Navigate component**.
+
+_`Now since we have React Hooks, the Navigate component that we're gonna learn about now is not so much used anymore. But there is still one very important use case for it which is inside nested routes. Let's do that very quickly.`_
+
+And notice how right after the app is opened so at /app, there will be a list of cities already there because we set index of route /app to the CityList element, but actually we are not in app slash cities. And so that's why the cities button is actually not selected. Only after we click on button we move to slash cities in url and it gets activated as well. **So in order to fix this we can now basically use the Navigate component to immediately navigate to this URL.**
+
+So let me show you how. So right now at /app, we have both the index route and the cities route pointing to the exact same element. So both of them simply include the CityList.  
+But now in the index Route let's now change that and let's instead use the Navigate component that React Router DOM gives us. And so then here just like in the **Links** we can specify the **to** prop.  
+**And so this is then basically like a redirect. So we can think of this navigate component here also like a redirect.** So as soon as the index route is hit, it will then redirect us to the city's Route.  
+
+```jsx
+<Route index element={<Navigate to="cities" />} />
+```
+
+So if open up the App, then immediately we have cities in url and of course it is marked as active. **Now the problem is when we want to go back, because notice how as we click on go back button, nothing really happens.** **And so to fix that here we need to add the `replace` keyword because this will then replace the current element in the history stack.**
+
+```jsx
+<Route index element={<Navigate to="cities" replace />} />
+```
+
+So I think this is the main use case right now for this **Navigate** element but still keep this in mind as you might need it in other situations. So basically situations where you cannot use the navigate function coming from the useNavigate hook.
+
+---
+
+_So we will keep working on this project in the next section but now we are ready to add something called context to this project. And so to do that we first need to learn about what that is in a small intermediate project before coming back to this one. And so let's now move on to the next section which is going to be all about that context API that I just mentioned there. So hopefully, I see you back there very soon._
+
+---
+
+**_`30 July 2024`_**  
+**_`03:12 AM`_**
 
 ---
