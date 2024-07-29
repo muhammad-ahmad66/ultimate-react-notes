@@ -14,6 +14,11 @@
 9. [Building the App Layout](#building-the-app-layout)
 10. [Nested Routes and Index Route](#nested-routes-and-index-route)
 11. [Implementing the Cities List](#implementing-the-cities-list)
+12. [Implementing the countries List](#implementing-the-countries-list)
+13. [Storing State in the URL](#storing-state-in-the-url)
+14. [Dynamic Routes with URL parameters](#dynamic-routes-with-url-parameters)
+15. [Reading and Setting a Query String](#reading-and-setting-a-query-string)
+16. [Programmatic Navigation with useNavigate](#programmatic-navigation-with-usenavigate)
 
 ---
 
@@ -793,68 +798,490 @@ So we still build components like accordions or tapped components using the useS
 
 ## `Implementing the Cities List`
 
-Now it's time to load our city's data from a fake API again and then to actually render that data into the UI. And so let's start by actually creating the city list component. So city list dotjsx and then we use our snippet and let's also immediately bring in our CSS module. So our CSM snippet, and so now let's use that style object here in an unordered list. So styles dot city list.
+Now it's time to load our city's data from a fake API again and then to actually render that data into the UI.  
+Use **csm snippet**, to import CSS module.
 
-And here for now, let's just write something. And so now here we want to finally replace this simple paragraph with the list of cities. So in this one and in the next child route actually as well. So city list, let's close that here and the same thing here again. Give it a save and then we get a problem.
+```jsx
+// CityList component
+import styles from "./CityList.module.css";
 
-So what do we have here? So apparently, it has something to do with the style. And, here, of course, it needs to be class name. And, yeah, that looks a lot better. Okay.
+function CityList() {
+  return <ul className={styles.cityList}>LIST</ul>;
+}
 
-So next up, let's actually set up our fake API again so that we can then fetch our city data from there. And so just like in the previous section for that we will install the JSON server package. So please go ahead and do that right now and again inside our current project folder, and then we will just come here to our package. Json file and add right here a new script. So that we can then run and start that JSON server right from our console.
+export default CityList;
+```
 
-So let's call this one server and the command will be JSON server watch and then it's at datacities.jason. Then let's specify also the port at 8,000 and this time around I also want to add an artificial delay so that it looks as if the API always takes half a second to actually fetch the data. So let's reload here just to get rid of that error, and now here we should be able to run this. So npm run server and here again we have a problem where this is already in use. So let's try 9,000 and there we go.
+```jsx
+// using CityList in App.jsx
+ <Route path="app" element={<AppLayout />}>
+  <Route index element={<CityList />} />
+  <Route path="cities" element={<CityList />} />
+  <Route path="countries" element={<p>Countries</p>} />
+  <Route path="form" element={<p>Form</p>} />
+</Route>
+```
 
-So now that works. So if we copy now this local host and then 9,000, you see that well we don't really have our data but that's because here I need to add slash cities. And so here are 3 cities that we can now load into our application using the fetch function just like before. So where are we going to do that? Well, we could do it right here in the city list because this is where we will first need this data, but we will later on also need this data in some other places.
+Next up, let's actually set up our fake API again so that we can then fetch our city data from there. And so just like in the previous section for that we will **install the `json-server` package**. And then inside a package.json file add a new script to run and start json-server from console/terminal.  
+This time we also want to add an artificial delay so that it looks as if the API always takes half a second to actually fetch the data.
 
-And in particular, if we look at our demo here, we need it here also in these countries. So these countries will be derived from all the cities. And finally, we also need it to display these markers here. So each city gets its own marker with some data of the city, and so then there we will need that data again. And so let's just place that data for now at least here in the app component.
+```json
+npm install json-server
 
-So basically as global state that will be available to all components that we want to pass in using props. So let's create a new piece of state called cities and then set cities and then our use state hook starting with just an empty object and then let's also get a quick is loading state and set isLoading. Alright. And then we want to load this data here right on mount. So let's use useEffect.
+"serve": "json-server --watch data/cities.json --port 3001 --delay 500"
 
-So onMount, so on the initial render of this component. Now it doesn't make a lot of sense actually to load this data right as the entire application loads, for example right here. So as it is right now we actually start loading the city data even as we are only on this page here. So on one of these pages where we don't really need that data yet. But for now let's just do it this way because in the next section we will even change this anyway.
+// Delay is only available on version 0.17.3 
+npm i json-server@0.17.3
+```
 
-So let's define an async function here called fetchcds. And then here we are missing of course that function keyword. And so let's as always create a variable called res and then await a fetch request to our API. So let's just grab that there and actually let's place that URL outside. So at least this part here but not the city's part.
+Now check this url: <http://localhost:3001/cities>  
+We see the cities. And so here are three cities that we can now load into our application using the fetch function just like before.  
+So where are we going to do that? Well, we could do it right here in the CityList because this is where we will first need this data, but we will later on also need this data in some other places. We need it also in countries. So countries will be derived from all the cities. And finally, we also need it to display markers in the map. So each city gets its own marker with some data of the city, and so then there we will need that data again. And so let's just place that data for now at least in the App component.
 
-So this is basically our base URL and now here we can construct our URL for the fetch based on this base URL. And so this then is a bit more reusable. So in case we will need to change this base URL later then we don't need to search in our code for this fetch request. So then we need to await res.json and then set the cities with the data that we get back. Then in case there is some error let's add a catch block and just alert something was an error loading data.
+---
 
-And what's wrong here? Yeah, of course. I forgot to add that, catch block or that try block actually. Then here we need to close this function and then we need our finally to set our loading state back to false. So set is loading to false and of course in the very beginning we need to set it to true.
+```jsx
+// in App.jsx, Pretty standard stuff that we have been doing all the time.
 
-So this is pretty standard stuff that we have been doing all the time here. Okay. And so right now this should already been working at the very beginning. So when we first load our application, let's try that again. And if we check out our network tab, well then we cannot really see that but it should be there.
+const [cities, setCities] = useState({});
+  const [isLoading, setIsLoading] = useState(false);
 
-So it's easier probably to check our component and, yeah, so here is our city data. And so now we want to pass that data so that here we can show a loading spinner or we can show then the data itself. So let's do that. And so now we see the advantage of why here we need to use an element and not a component because now we can very easily pass in that data. So cities will be cities and then is loading equals is loading and the same thing here.
+  useEffect(function () {
+    async function fetchCites() {
+      try {
+        setIsLoading(true);
+        const res = await fetch(`${BASE_URL}/cities`);
+        const data = await res.json();
+        setCities(data);
+      } catch (err) {
+        alert("There was an error loading data...");
+      } finally {
+        setIsLoading(false);
+      }
+    }
+    fetchCites();
+  }, []);
+```
 
-And don't worry about this duplicate code here because we will actually get rid of these props when we start talking about context in the next section. But anyway, now let's use this data right here. And, yeah, first of all we need to accept that. So cities and is loading. And so now the first thing that we want to do is to if is loading then we want to just return a spinner here.
+So this is pretty standard stuff that we have been doing all the time here. Okay. And so right now this should already been working at the very beginning. So when we first load our application.
 
-So something indicating that the page is loading and only if that's not the case we want to then return this actual list. So we already have a spinner component actually. I think that's what it's called. Yeah. So right here we have the spinner And if you want, you can of course check out all the code for that.
+And now we want to pass that data so that there we can show a loading spinner or we can show then the data itself. So let's do that. And so now we see the advantage of why here we need to use an element and not a component because now we can very easily pass in that data. So cities will be cities and then isLoading equals isLoading.
 
-But anyway, let's now just import that really quick here. So from and then spinner. Okay. But otherwise we want to of course render this list. And so as always what we do is to take our cities and then map over them.
+```jsx
+<Route
+  index
+  element={<CityList cities={cities} isLoading={isLoading} />}
+/>
+<Route
+  path="cities"
+  element={<CityList cities={cities} isLoading={isLoading} />}
+/>
+```
 
-So for each city object we want to create 1 city component. And so let's actually create that component here first. So, let's then call that the city item dot jsx. Okay. And so this will then take in the city and here it will return 1 li and let's just type city for now.
+And now the first thing that we want to do is to if isLoading then we want to just return a spinner here.  
+But otherwise we want to of course render this list. And so as always what we do is to take our cities and then map over them. So pretty standard stuff.
 
-And then here we can bring that city item in and pass as a prop the current city. So pretty standard stuff and let's also define the key as the city dot id. Alright. And so here we have one city text for each of the cities. So let's reload this and we have a problem.
+```jsx
+import Spinner from "./Spinner";
 
-So cities dot map is not a function. And I know why that is. It's because by default here we have this empty object which should actually be an empty array. So let's see. And very shortly you saw the loading spinner there which should have lasted a bit longer.
+import styles from "./CityList.module.css";
+import CityItem from "./CityItem";
 
-So maybe we have some problem here with the delay, and here it should actually be 2 dashes like this. So then we need to quit the process with control c and run it again. Alright. Try that again, and yeah, beautiful. That looked a bit better there.
+function CityList({ cities, isLoading }) {
+  if (isLoading) return <Spinner />;
+  return (
+    <ul className={styles.cityList}>
+      {cities.map((city) => (
+        <CityItem city={city} key={city.id} />
+      ))}
+    </ul>
+  );
+}
 
-So it seems a bit more real this way. All right, and now this component here is now almost finished and so let's take care of the city items themselves. So first of all, each of them has some styles. So let's import them here and then the class name should be styles. Cityitem and we already see some change there.
+export default CityList;
+```
 
-But now let's work on the content itself. So here the class is style dot emoji because here we will display the emoji and let's actually destructure each of these cities. And to do that, let's first take a look at the shape of the objects. So right here, so we get the city name, the country, the emoji, the date, and some notes. Now we're not going to need all of them so let's just destructure the ones that we need.
+Now let's take care of the CityItem themselves.
 
-So we want the city name of course, the emoji, and the date for now. And so that is going to come out of city. And so here let's now use emoji, and then let's keep going. So class name styles dot name. And then here let's use the city name.
+So here let's actually use the time HTML element. And so then here the date and actually let's format this date a little bit because like this it doesn't look really nice and I think we have a function for that already here in the city component.
 
-Yeah. Nice. This is already starting to look similar to what we have here. Now we're just missing the date and then this button here we will add it later. Or maybe we will actually add it now but we can just give it no functionality.
+```jsx
+import styles from "./CityItem.module.css";
 
-So here let's actually use the time HTML element. And so then here the date and actually let's format this date a little bit because like this it doesn't look really nice and I think I have a function for that already here in the city component. So something like this. Let's just adapt this a bit. So placing this outside the component, of course, so that it doesn't always get recreated.
+const formatDate = (date) =>
+  new Intl.DateTimeFormat("en", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  }).format(new Date(date));
 
-So here let's just remove the weekday which we don't really care about. And so then let's wrap that date into a format date function call. Nice. So almost the same. Now let's just add this button and wrap that into parenthesis here.
+function CityItem({ city }) {
+  const { cityName, emoji, date } = city;
+  return (
+    <li className={styles.cityItem}>
+      <span className={styles.emoji}>{emoji}</span>
+      <h3 className={styles.name}>{cityName}</h3>
+      <time className={styles.date}>({formatDate(date)})</time>
+      <button className={styles.deleteBtn}>&times;</button>
+    </li>
+  );
+}
 
-Okay. And then the button itself. So a bit annoying that Versus Code always places those quotes there. Maybe there is some way of changing that default and if you know about that then please let me know. But anyway, now here we have that button which of course will not do anything now but we will take care of that later.
+export default CityItem;
+```
 
-So this is starting to look really beautiful. And now to finish let's just take care of the situation in which there is no cities yet. So imagining that the user uses the application for the very first time then there will be no data yet. So let's duplicate this here just so we don't lose the data and then let's just remove everything so we get just this empty array. So if we reload now then we get nothing.
+And now to finish let's just take care of the situation in which there is no cities yet. So imagining that the user uses the application for the very first time then there will be no data yet. And so let's change that right in the CityList component. So we can do some more conditional rendering.
 
-We also don't get an error but it looks a bit, well, empty like that. And so let's change that right here in the city list component. So we can do some more conditional rendering. We are already testing for that situation, but let's also say if there is no items, so if cities.length is nonexistent then let's return some other component that I also already included which is this message component. So this is again just a presentational component which all it does is to receive a message string and then it displays that nicely in the UI with this emoji right there.
+So if cities.length is nonexistent then let's return some other component that I also already included which is this Message component. So this is just a presentational component which all it does is to receive a message string and then it displays that nicely in the UI with the emoji right there.
 
-So let's use that and we pass in the message prop lowercase please. Add your first city by clicking on a city on the map. Alright. Of course, now our app doesn't know about this but there we go. Beautiful.
+```jsx
+if (!cities.length)
+  return (
+    <Message message="Add you first city by clicking on the city on the map" />
+  );
+```
 
-Now, of course, we cannot do that yet and so let's just get all the data back here give it a save and delete this file and so with this we have actually finished this lecture.
+---
+
+## `Implementing the countries List`
+
+Let's now quickly build the list of all the countries that the user has already visited. So basically we need to filter out the duplicate countries, b/c may a a user visited two countries from the same country.
+
+But now let's take care of that where we will derive countries from the cities array. Now the idea is basically to create a new array which only contains the ones where the city name is unique. And so for complex operation like this I many times like to reach for the reducer method.  
+
+```jsx
+// in CountryList.jsx
+const countries = cities.reduce((acc, city) => {
+  if (!acc.map((el) => el.country).includes(city.country))
+    return [...acc, { country: city.country, emoji: city.emoji }];
+  else return acc;
+}, []);
+```
+
+And there we go. So now only the 3 countries here that are unique basically remained right here in the array. So this is just a common JavaScript here, has nothing to do with react development. So that's why we don't need to go deep into how this code works. So basically all this does is to as it loops over the city array it keeps constructing the countries array which starts at 0, so completely empty. And so then in each iteration it asks if this array here already includes the current city. So the city that is currently being looped over. And if not, well then we basically add a new object to that array which contains the current country and the emoji.
+
+```jsx
+import Spinner from "./Spinner";
+import Message from "./Message";
+
+import styles from "./CountryList.module.css";
+import CountryItem from "./CountryItem";
+
+function CountryList({ cities, isLoading }) {
+  if (isLoading) return <Spinner />;
+
+  if (!cities.length)
+    return (
+      <Message message="Add you first city by clicking on the city on the map" />
+    );
+
+  // list of countries by using reduce method, i also need country name and emoji from city:
+  const countries = cities.reduce((acc, city) => {
+    if (!acc.map((el) => el.country).includes(city.country))
+      return [...acc, { country: city.country, emoji: city.emoji }];
+    else return acc;
+  }, []);
+
+  return (
+    <ul className={styles.countryList}>
+      {countries.map((country) => (
+        <CountryItem country={country} key={country} />
+      ))}
+    </ul>
+  );
+}
+
+export default CountryList;
+```
+
+---
+
+## `Storing State in the URL`
+
+Now it's time to take the usefulness of React Router to the next level by actually storing state in the URL so that we can use it in different places of the application.  
+But you might be wondering, storing state in the URL, don't we actually use the useState hook to manage state? Well, that's true most of the time but the URL is actually also an excellent place to store state and especially UI state.  
+**And with UI state, I mean state that affects what the UI looks like. So things like an open or close panel or a currently applied list sorting order or filter.** So these examples of state are great candidates to be stored in the URL and basically to be managed by the URL with React Router.
+
+**Now, why would we want to do that?** And that's again an excellent question.
+
+- So the first reason is that placing state in the URL is an **easy way to store state in a global place that is easily accessible to all components in the app.**
+    So before, if we wanted state to be accessible everywhere we would have to store it in a parent component and then pass it all the way down to all child components using props. But if we place state in the URL we can easily just read the value from there wherever the component is in the component tree. So basically we can move some state management from react to the URL.
+- Also placing state in the URL is in many situations a **good way to pass data from one page into the next page without having to store that data in some temporary place inside the app.**
+- And finally, another amazing reason why we should place UI state right in the URL is that doing so **makes it possible to bookmark or to share the page with the exact UI state that the page had at the time that we are sharing or bookmarking it.**  
+    For example, in an online shop we might be filtering products by color and by price. And if that filter is saved in the URL, we can then share the page with someone and they will see the exact same filters applied to the list of products. So that's really helpful and enables a great user experience.  
+
+Okay. But enough talking, let's see how we can actually do this using React router.
+
+<http://example.com/app/cities/lisbon?lat=38.343&lng=-8.9834>  
+So in a URL like this, we have path like /app/cities/, that we already now, But for actually storing state in the URL we use **params** or the **query string**.  
+Now params which stands for parameters are very useful to pass data to the next page while the query string is useful to store some global state that should be accessible everywhere.
+
+![Url For State Management](/ss/url-for-state-management.jpeg)
+
+But to understand this a bit better, let's look at this example in more detail. So this URL that we just looked at corresponds to this view(see in picture ⤵). And in the URL you see that the param is Lisbon. And so because of that the page that was loaded is exactly about the city of Lisbon.
+
+So, by creating a link that points to a URL with this param, we are able to pass the city name to the next page whenever the user clicks on that link. And of course if the URL had another city name as the param, let's say Berlin, then the loaded page would be about Berlin. And so that's the power of params, but there is more because we also have the query string and it works in a very similar way. So in this example, we store the lat and lng pieces of state in a query string which correspond to disposition on the map. And the same is true of course for the other URL.  
+
+![Url For State Management](/ss/params-and-query-string-for-state-management.jpeg)
+
+So each of these cities has of course a unique location and that location is reflected right in the URL. And so in this example, we leveraged the power of the URL to manage state in an effective way by reading the city name and the GPS location from the URL instead of using application state inside React.
+
+---
+
+## `Dynamic Routes with URL parameters`
+
+So let's now use react router params in order to pass some data between pages. So just like we have learned in the previous lecture.
+
+We'll have a url like this: /app/cities/478373j4, so the id of clicked city.  
+So we have app slash cities and then slash the ID of the city. And if we go to another one then the ID changes. And so if I now click on this link then the component down used that URL to fetch the data about the city from the fake API. And so that's what I mean by passing data from one page to the other.
+
+So in this case we passed the ID of the city, from one component to the other, without storing that data somewhere inside the React application which we would have to do without React Router.
+
+**let's Implement this in our Application**  
+To use **params** with React Router we basically do it in 3 steps. `First` we **create a new route**, `then` we **link to that route**, and `then` in that route we **read the state from the URL**. So that's just a high level overview, and so let's now do all of these steps one by one.
+
+1. `Crating new Route`
+
+    And so first we create a brand new Route. So a new route with a **path of cities and then slash colon and then whatever name we want to give the parameter**. So let's call it id in this case.  **_`path="/cities/:id"`_**
+
+    ```jsx
+    <Route path="cities/:id" element={<City />} />
+    ```
+
+    So this was the first step which was to create a route with this path linked to this city component.
+
+2. `Link the URL`  
+    Now next up as the second step we actually need to link this url/route that we created now. So we want to link with each city item, So let's come to CityItem. And so now inside of each list item element we will actually place a link. So one of these special <Links></Links> that comes from React router.
+
+    Now let's add the **to prop** where we put the link, so where we want to send the data. So let's create a template literal and then all we want here is actually the city ID.
+
+    ```jsx
+    function CityItem({ city }) {
+      const { cityName, emoji, date, id } = city;
+      return (
+        <li>
+          <Link className={styles.cityItem} to={`${id}`}>
+            <span className={styles.emoji}>{emoji}</span>
+            <h3 className={styles.name}>{cityName}</h3>
+            <time className={styles.date}>({formatDate(date)})</time>
+            <button className={styles.deleteBtn}>&times;</button>
+          </Link>
+        </li>
+      );
+    }
+    ```
+
+    Now, as we click one of the city then it actually moves and here we get the URL with the id of clicked city. So we get that ID inside the cities slash ID URL exactly like we have defined. like this:⤵
+
+    ```url
+    // CORRECT
+    <Link className={styles.cityItem} to={`${id}`}>
+    http://localhost:5173/app/cities/17806751
+
+    // NOT CORRECT
+    <Link className={styles.cityItem} to={`/${id}`}>
+    http://localhost:5173/17806751
+    ```
+
+    **`And it's really important that here we only pass in the ID because in this format this will then simply add it to the current URL. <Link className={styles.cityItem} to={`${id}`}> While if we started this with a slash like: to={`/${id}`}, then it would simply go to the root URL slash the ID. So that's not what we want. We want to basically attach this ID here to the end of the URL that we already have.`**
+
+3. `Read the data from the URL`  
+    Now in the 3rd step we can then read the data from the URL into the component. And with that we will then finish this entire cycle. So let's come into the City component and then in order to get that data from the URL we use the **`useParams hook`**, which is once again provided to us by react router. So it needs to be included here and so this will then return something to us. So let's just call that x for now and then I want to console dot log dot x. So we got this object with the id. like this: {id: '73930385'}  
+    And the reason why this is called id is because that's the parameter name that we gave it in Link to **to prop**. And so then here in the component where we consume this data from the URL we usually immediately destructure that. _const { id } = useParams();_
+
+    Nice. So we just learned how to use this very important tool of react router that are params.
+
+**`QUICK RECAP`**  
+So let's quickly recap. So we created a new route. Anyway here we specify the name of the param and as always the element that should be rendered when the URL matches this path. Then we basically link to this route. So we create a link that we can actually move to this page in our application and we did so by passing in this data. So this ID of each city and then as a final step we read that data from the URL using **useParams** hook.
+
+---
+
+## `Reading and Setting a Query String`
+
+And now let's learn how to use the second way of storing state in the URL, which is the **query string**.  
+And so in this lecture, I want to do exactly what I showed you in that slide 2 lectures ago. So where we added the position of the current city right to the URL as a query string. So adding that data to the query string is actually really, really easy. All we have to do is to add it to the path that the user will go to when they click on the link.
+
+So we are in the CityItem component which gets access to the current city. And each of the city gets also access to a position object. It contains the latitude and the longitude. And so let's now add the latitude to our string. So we are building this URL. So we already have the ID and now we need the question mark and then the name of the state variable that we want to share, basically.
+
+```jsx
+<Link
+  className={styles.cityItem}
+  to={`${id}?lat=${position.lat}&lng=${position.lng}`}
+>
+```
+
+Now the state that we had inside our application was now transferred to the URL. So we have both the latitude and the longitude right now in this globally accessible URL. And so it is as if this data is now global state which we can access from everywhere.  
+So that includes for example the Map component. So let's now move to the Map component which we already created earlier. And so in there let's now try to read this latitude and longitude data from the URL. **And so for that we use the use search params custom hook that React Router gives us.**
+
+So here it is, `useSearchParams` and this one is a bit similar to React's useState hook. So it returns an array which has basically the current state which we usually call the searchParams. And then second we get a function with which we can set the searchParams.
+
+```jsx
+const [searchParams, setSearchParams] = useSearchParams();
+```
+
+And now let's try to store first the latitude into this lat variable because this data is actually not directly accessible on the searchParams. So it's not like an object that gives us this data here instead it's an object onto which we need to now call the **get** method. **So get and then the name of the variable itself**. So let which is exactly this name right in the url. So this needs to match this.
+
+```jsx
+const [searchParams, setSearchParams] = useSearchParams();
+const lat = searchParams.get("lat");
+const lng = searchParams.get("lng");
+```
+
+And so basically with this by clicking on one of these links in the list we successfully share the state. So in this case the position state with our entire application. So at every component that wants to access it.
+
+So let's grab this and move here into the city component and let's do the same thing there.
+
+**_So now, once again we were able to pass the data into all kinds of different components without having to store it anywhere inside our react application. So we didn't have to create any new piece of state but instead we just stored it in the URL and then made it accessible everywhere._**
+
+So remember that we got the state into the URL in the first place by passing it into the Kink. So into the **to** prop of the Link. So this is how we create a query string but we can also then update the query string using this setSearchParam functions. So let's do that here as well.
+
+And so we will just create a temporary button. Let's say change position with an on click handler. And now say setSearchParams and then we need to actually pass in an object with the entire new query string.
+
+```jsx
+<button
+  onClick={() => {
+    setSearchParams({ lat: 23, lng: 50 });
+  }}
+>
+  Change Position
+</button>
+```
+
+Alright. So, here⤴ we don't use the set function as you might expect but instead we now need to pass in a brand new object. And with this this query string state is updated updated everywhere. And so that is really powerful. So it changed not only in the URL but also everywhere in the application where this data is read.
+
+Both the params and the query string now working, we can demonstrate one of the great advantages of having all the state stored in the URL that we talked about earlier, which is that now we can just take the URL and then for example share it with someone. So we can now copy this and then send it in some WhatsApp message or something like that, and then the other person can open up their browser, paste that URL there, open it up and then they will see the page at exactly the same state.
+
+But anyway, as you just saw throughout these two lectures using params and query strings really are amazing techniques that you are going to start using all the time once you start using React router on your own.
+
+---
+
+## `Programmatic Navigation with useNavigate`
+
+Next up, let's learn about programmatic navigation with the `useNavigate` custom hook.
+
+**So programmatic navigation basically means to move to a new URL without the user having to click on any link.** And a common use case of this behavior is right after submitting a form. So many times when the user submits a form, we want them to move to a new page in our application automatically, so without having to click on any link. And so then we can use programmatic navigation to achieve that.
+
+Now in this example what I want to do is that whenever the user clicks somewhere in the Map Component we then want to move automatically to the Form component. And clicking on Map cannot really happen with a Link, and so that's why we need programmatic navigation.
+
+---
+
+But first of all create a route for form.
+
+```jsx
+<Route path="form" element={<Form />} />
+```
+
+The element will be a Form component, which has been given to us already in the starter data. So we already have that in our component directory.
+
+```jsx
+// Form component
+// "https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=0&longitude=0"
+
+import styles from "./Form.module.css";
+
+export function convertToEmoji(countryCode) {
+  const codePoints = countryCode
+    .toUpperCase()
+    .split("")
+    .map((char) => 127397 + char.charCodeAt());
+  return String.fromCodePoint(...codePoints);
+}
+
+function Form() {
+  const [cityName, setCityName] = useState("");
+  const [country, setCountry] = useState("");
+  const [date, setDate] = useState(new Date());
+  const [notes, setNotes] = useState("");
+
+  return (
+    <form className={styles.form}>
+      <div className={styles.row}>
+        <label htmlFor="cityName">City name</label>
+        <input
+          id="cityName"
+          onChange={(e) => setCityName(e.target.value)}
+          value={cityName}
+        />
+        {/* <span className={styles.flag}>{emoji}</span> */}
+      </div>
+
+      <div className={styles.row}>
+        <label htmlFor="date">When did you go to {cityName}?</label>
+        <input
+          id="date"
+          onChange={(e) => setDate(e.target.value)}
+          value={date}
+        />
+      </div>
+
+      <div className={styles.row}>
+        <label htmlFor="notes">Notes about your trip to {cityName}</label>
+        <textarea
+          id="notes"
+          onChange={(e) => setNotes(e.target.value)}
+          value={notes}
+        />
+      </div>
+
+      <div className={styles.buttons}>
+        <button>Add</button>
+        <button>&larr; Back</button>
+      </div>
+    </form>
+  );
+}
+
+export default Form;
+```
+
+So here we have our form, but at this point we have no way of moving to this URL, so to _app/form_. We now want that to happen when the user clicks somewhere on the Map.  
+So let's do that. And so let's attach an event handler onClick on map container.
+
+---
+
+Now we need to actually use the useNavigate hook. So another hook that is provided by React Router. And all this one does is to return a function called navigate. And so then we can use this function to basically move to any URL. So we just need to call that. Just like this:
+
+```jsx
+const navigate = useNavigate(); // return a function
+---
+<div
+  className={styles.mapContainer}
+  onClick={() => {
+    navigate("form");
+  }}
+>
+```
+
+And so let's say we want to move to the form, and that's it. So let's go somewhere else. At least it should be here in the app. And so now let's see what happens when I click somewhere here, and indeed it did move to the form. So without us having to click on any link.
+
+So this is programmatic navigation where we basically, in an imperative way, navigate to this URL. So here in enough, we do that also. So we also navigate to another page but in a declarative way because we just declare this component in our JSX and that will then do the work of navigating to the city's URL for us. But in this case again we do it in an imperative way because we cannot use the link in this situation. And the same again, after submitting a form.
+
+So then we would have to also call this navigate function. And so we will do that later. So this is one use case of the navigate function but we can also do something else which is to simply navigate back which is in fact something that we cannot do just with links. So let's try that out by coming here to the form. And so here we actually have a button to go back, and so now we want to implement that functionality.
+
+But before we do that I now want to create actually a reusable button component. So let's create a new file here, button.jsx, and here it is now a button element and then let's see what we need here as props. So we need the children prop so that we can pass in some content. Then we also need to accept the on click prop. And finally, here I also want to accept a type string.
+
+And so using that type I then want to conditionally add a CSS class. But let me show that to you in the end. So first let's do our typical things which is to allow the user to attach an on click event handler to this button. Okay. Then we also need to get in our styles and then let's add the class name here, styles.btn.
+
+Okay. So let's come back here and use that button. And for now we don't pass in here the on click event handler as we will do that later. So here we got some styling already but that is not enough. So let's come here to the CSS module for the button and notice that besides the button class we have these 3 other classes.
+
+And so now we want to allow the user to pass in a type which can be either primary or back or position. And then according to that we will add the corresponding class. So what I mean is this. So instead of now manually passing in here a class name we just pass in a string with the type of button that we want. So here we want a primary button.
+
+And so then here we receive that inside the button as the type and then we will use that as a class name here. So this means that now we need to add 2 class names. And the way we do that in CSS modules is that we need to create a template literal. So let's wrap this first in backticks then into this, curly braces. And then here let's do the other one.
+
+So for example, here we could say now styles dot primary. And so then all the buttons would get green like this because the primary is the one with the green background. But remember that actually here we want the type. And so, here we now need to do it like this, and so here we get indeed the primary type but if we use now the back button, so let's do that, Then we will get another style. So type off back and then let's see what we get.
+
+And beautiful. So we basically dynamically now selected the style that we want using this type prop string. So let's close that, and now finally let's attach the on click handler here so that we can again use the navigate function right here now. So let's include our custom hook again. So use navigate from react router dom and by the way this used to be called use history in a previous version of React router.
+
+And so now we want to navigate back. So how do we do that? Well, we just need to define basically the number of steps that we want to go back in the browser's history. So if we say minus 1, then that means that we basically navigate back. So let's try that out here and moving to cities.
+
+And then as I click here that will open the form. And so now when I click here we should move back to cities. Right? Well, that didn't really work. I mean, maybe you saw a flash of this moving back but then it reloaded the page here again.
+
+And so the reason for that is that this button is located inside a form. So we are inside a form and so therefore this will trigger the form to be submitted. And so that will then cause the page to reload. So what we also need to do here is to prevent default. So we need to receive the event and then we need to do e dot prevent default.
+
+And so this will then prevent this button as it is clicked to submit this form. So let's try that again. Clicking here will open this, and now as we move back we are back here in this URL. And if I go to countries then click here again and click back then we move back to countries. And of course, we could also move forward by doing plus 1 here or we could move back twice by doing minus 2, but usually what we always need is just like this.
+
+Okay. And that's actually it. That is programmatic navigation for you. Now here I'm just noticing we have some problem. So something with the country list.
+
+So country list, I remember that we removed the key from here but we never put it back. So let's just use the country dot country which is unique in this situation. So let's reload and then we get no more error.
 
 ---
