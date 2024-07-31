@@ -1017,13 +1017,13 @@ Okay. But enough talking, let's see how we can actually do this using React rout
 So in a URL like this, we have path like /app/cities/, that we already now, But for actually storing state in the URL we use **params** or the **query string**.  
 Now params which stands for parameters are very useful to pass data to the next page while the query string is useful to store some global state that should be accessible everywhere.
 
-![Url For State Management](/ss/url-for-state-management.jpeg)
+![Url For State Management](./ss/url-for-state-management.jpeg)
 
 But to understand this a bit better, let's look at this example in more detail. So this URL that we just looked at corresponds to this view(see in picture ⤵). And in the URL you see that the param is Lisbon. And so because of that the page that was loaded is exactly about the city of Lisbon.
 
 So, by creating a link that points to a URL with this param, we are able to pass the city name to the next page whenever the user clicks on that link. And of course if the URL had another city name as the param, let's say Berlin, then the loaded page would be about Berlin. And so that's the power of params, but there is more because we also have the query string and it works in a very similar way. So in this example, we store the lat and lng pieces of state in a query string which correspond to disposition on the map. And the same is true of course for the other URL.  
 
-![Url For State Management](/ss/params-and-query-string-for-state-management.jpeg)
+![Url For State Management](./ss/params-and-query-string-for-state-management.jpeg)
 
 So each of these cities has of course a unique location and that location is reflected right in the URL. And so in this example, we leveraged the power of the URL to manage state in an effective way by reading the city name and the GPS location from the URL instead of using application state inside React.
 
