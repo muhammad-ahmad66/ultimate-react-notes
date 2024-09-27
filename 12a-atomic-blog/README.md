@@ -977,34 +977,6 @@ Alright. So the idea of this diagram is more to give you an overview and a refer
 
 ## `Back to WorldWise_Creating a CitesContext`
 
-Now it's time to move back to the world wise application that we have been building to now use the context API in exactly the way that I showed you earlier. So in this video, we're gonna create a similar custom context provider component but this time for the city's data. So here we are back in the world wise application. And I hope that you didn't close your editor in the meantime. But if you did, then just make sure to start the application again and also our fake API server.
-
-So to know which commands those are, you can just open up your package. Json file and then you will see that you need to do npm run dev to start the application and then npm run server for our fake API. Okay. Now as you learned in the previous lecture, just because you now know how to use the context API, that doesn't mean that it's always the right tool or the right solution for managing the state in your applications. But when you have a small sized application like this one that we are building right now and where performance is never gonna be an issue, then the context API is a great tool indeed.
-
-Now here we actually don't even have much prop drilling going on, but I think that it's still nice to get rid of some of the props and make the code look a little bit cleaner. Also by doing this, we're gonna be able to move all of this state here and the state logic into its own place. And so let's now start doing that. So just like before we are going to create our own custom context provider and so let's actually create a new folder. So that's a common practice to create a new folder called context or could also be contexts even though that's a bit hard to say.
-
-Okay. And now here, let's create our cities context.jsx, which again is because we are now using Vite. Okay. And so now let's follow the exact same recipe that we created ourselves earlier. So we're going to start by creating that new context, so cities context by calling the create context function coming from React.
-
-Next up, it's then time to create that provider component. And so this one is gonna be called cities provider, and remember it will need to accept the children prop so that we can then use this provider component as the top level component in the app component. So again, just like we did before. And now next up, let's grab all this code here that was already selected. So all the state code and the state updating logic which in this case includes this useEffect, let's cut that from here and place that here.
-
-And so then we just need to import useState and useEffect. Write this and we are also missing here our base URL. Let's place that here at the very top, and nice. So no more big errors except, of course, right here in the application where we are now missing all of our variables. So we no longer have the cities and the is loading state here because we will pass them later using the context.
-
-Right? So we could Even why not? We could just immediately remove all of this from here. So then we can right away see how clean this component is going to look like. Alright.
-
-And so the homepage actually now works because it wasn't relying on any of those state variables. So if we reload this then everything looks fine. The only thing we can do is to open up our application. So that won't work because for now it doesn't have access to the cities and the is loading state. But watch how clean our application component now has become.
-
-So all it does really for now is to define these routes and match them simply to the components, so without any props. Okay. We can even remove this line of code here. And so with this, let's go back to our context provider here. So now it's actually time to use that city's context and so that is, of course, in the return block of this component.
-
-So here we will return cities context dot provider remember. So just like this and then here we can immediately place the children and then of course our value. And then we need another curly braces which is for our object. And so now let's see what we want to do. Well, for now we only need to pass in the cities and the is loading state.
-
-So this is all we need for now. Okay. And so let's now export this component from here and remember how we used named exports before. So this time in this component we don't use the default export because we will later on also export that custom hook. But for now let's just export the cities provider.
-
-And so then in here we will be able to import that. So let's just try to use that here. So cities provider, and you see it automatically imported that from here. And now all we need to do is to grab that from here, go all the way to the end, and beautiful. There we go.
-
-And with this we provided both the is loading and the city state to our entire application tree. And we can see that also right here. So we have the app component and then in there we have the cities provider which indeed returns context dot provider. Then in there is all this other stuff which clogs up our tree here a little bit so it makes everything a bit harder to see but, well, that's just how it works. As you start using all these libraries then the component tree isn't as clean as we were used to from before.
-
-Now remember that this works because we are passing in all of this here into the city's provider as children. Right? And again, that's because we provided this content here between the opening and the closing tag. So that's the reason why here we really need to accept the children prop right here and then place basically all those elements that I just selected here. So all of this will then be placed here.
-
-So between the actual provider component. So the one that really provides this value here to the component tree. Okay. So this is the first part of the recipe. Next up, we need to create that custom hook so that we can then consume this value wherever we need it.
+Go to next section in `Back to WorldWise`
 
 ---

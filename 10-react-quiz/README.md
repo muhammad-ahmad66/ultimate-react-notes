@@ -1943,3 +1943,41 @@ export default function App() {
 ```
 
 ---
+
+## `CHALLENGE-2 Refactoring React Quiz to Context API`
+
+`Try this challenge after finishing the 12b-worldWise section`
+
+---
+
+Let's now practice the context API in this final challenge. And we are back here to our react quiz. **The challenge is to create an advanced state management system with the useReducer hook and the context API.** So basically, I want you to imagine that you are working on this application like in some company and then you have been tasked by your project manager to refactor this whole application using the context API together with the reducer that we already had in this application.  
+
+So your tasks are first to duplicate the source folder that we already had before to create this `source-no-context` folder,containing all or previous code so that you don't override that. Of course you can also use git for this if you prefer but here I just want to keep it simple.
+
+The next up you should probably review how data flows through this application right now and what kind of props we have to pass. So by doing that you can then maybe identify a small prop drilling problem which again is quite small but we will still try to kind of fix it in the next step using the context API. So in order to do that create a new quiz context and you can place it into a quiz context dot JS file like we have been doing before. So basically here in this folder you can create quiz context and so there you will then have your context and also the reducer that we created earlier. And so with this you will create that advanced state management system that we have also created in our world wise application earlier. And then also in the same file just like before you create a custom provider(QuizProvider) component like this in order to provide all the state that you need to the application. And then you can just create a custom hook so that all the components in the application can consume that state from the context. So then of course use that hook all over the application so that you can then delete all the unnecessary props.
+
+Now what's very very important to note here is that actually you are going to need some state right in the app component. So this state will then no longer live here, of course, but you'll need that state immediately in this application. And so what that means is that this app component itself here will already need to be inside the context itself. So the solution for that will be to actually include the context inside index.js file. So that's the tricky part.
+
+Okay. And so that's what I need you to do in this challenge. Now I will actually not write all the code here in this video because that's just gonna take too long, but I will quickly walk you through the changes that I made. So this is gonna be a great challenge for you to practice now really working on your own on an already existing application and to significantly refactor the codebase. So please take all the time that you need and then go ahead and watch my solution.
+
+So welcome back. Hopefully that was not a big problem but let's now see how I did it. So again, I'm not gonna write a code here. I will just show you. So here we have the quiz context.
+
+Js which contains all the initial state, all the reducer, and then of course that quiz provider component that I mentioned earlier. And so here is then all the logic that was before inside App. Js, which we now placed here in this custom provider. And so then here is the provider itself where we pass all these different state values plus the dispatch function into the context which is quite different to what we did earlier in the world wise application. So remember how there we didn't pass the dispatch function but really just the event handler functions.
+
+But that was because we were dealing with asynchronous code which here is not the case. And so here we don't need any intermediary event handler functions. We can simply dispatch this function so that we can then dispatch events in the components. But anyway here we then of course also have our custom hook and then let's come into our main app component. So then here this component is really nice and clean now.
+
+So all the prop drilling is gone and yeah, we don't even need to pass any more props into any of these components anymore. And notice again how I mentioned that here we need this status state. And so therefore we need to read some data out of the context which is the reason why we needed to provide that context right here. So to the entire application. Okay.
+
+And so then all the components are really nicely cleaned up. So for example, in this one instead of receiving all the props that we received earlier we just call our custom hooks and then we get all the state from there. Now maybe you run into one small problem here in this question. So earlier the question component received the question prop which was computed using the questions and the index. So if you remember that and you just wrote the code so I'm sure you do.
+
+So where is that? Right here. So we pass in this questions prop which was basically computed by taking the current question out of the questions array. Now here since we no longer pass props we need both the questions and the index so that we can then compute the question right here. All right.
+
+And maybe here in the options if you just deleted all the props then you might have run into a problem because this component here actually is the only one I believe that still needs a prop. So here inside the question we of course still pass the current question into the options component. And so then it gets the current question from the prop but the current answer comes from the context. Okay. So I think this was really really nice for you to practice this on your own and I'm sure you got this to work just in a way that I just explained.
+
+But anyway with this we wrap up yet another section and so hopefully I see you soon in the next one which is actually gonna be a bit complicated again but well that's what we are here for hopefully. So get ready and then I meet you there very soon.
+
+---
+
+_**`27 / 09 / 2024`**_
+
+---
