@@ -74,22 +74,22 @@ And so basically this will give us one of the three reasons that we talked about
 
 But anyway, now I will start recording and then I will update the state of the page by typing in the search bar. We see how that actually looks like in the profiler and then we click there to stop the recording and then here is our Flame Graph. So we can see the result in the flame graph and also in the ranked graph.
 
-![Profiler Flame Graph](/ss/profiler-flamegraph.png)
+![Profiler Flame Graph](ss/profiler-flamegraph.png)
 
 So starting with the flame graph, this is basically just another way of representing the component tree. So as the parent we have App, then we have our Provider and inside the provider we have indeed the Header and the Main which in turn contain all of these components. Now what's special about this is that some components are actually colored and some are gray. **So the gray components are the ones that did actually not render while the application re rendered.** So main, posts and app did not rerender but all these others did. **And the more yellow the color is, the longer it took to rerender.** So the PostProvider we can see took the longest.
 
 Now in order to rank them we can, as the name says use the ranked tab.
 
-![Profiler Ranked Graph](/ss/profiler-rankedgraph.png)
+![Profiler Ranked Graph](ss/profiler-rankedgraph.png)
 
 And so here we can then very clearly see for example that some of these components were really really fast(dark green) to render while this one(yellow) took a bit longer. And even though that's less than a millisecond, which is really nothing.  
 Now, thanks to the setting that we activated in the beginning, we can also see why each of the components re rendered. So here⬇️, for example, we can see that the post provider re rendered because hook 2 changed.
 
-![Profiler Why Re-Render](/ss/profiler-ranked-with-why-render.png)
+![Profiler Why Re-Render](ss/profiler-ranked-with-why-render.png)
 
 And so the hook 2 is simply the use state hook which is storing the search query. So then here the Header re rendered because context changed. So let's check that out actually in code. So indeed, the header is consuming the context and so therefore it changed as we updated the state in the context. And the Results and the Form and the List, all of them are consuming the context. And so therefore, they then also updated as the component was updated while the Main and the Post components are not consuming the context and so they did not re render. So this is how we can basically analyze this flame graph.
 
-![Profiler Commits](/ss/profiler-commits.png)
+![Profiler Commits](ss/profiler-commits.png)
 
 Now up here⤴️ we have the different commits how they are called or in other words each of them is one re render. So I think that's easier to understand. And so since we did 3 times the same thing here we should expect them to look basically the same. Now the timings have changed here for some reason but the components that have actually rendered and not rendered are exactly the same. Alright.
 
