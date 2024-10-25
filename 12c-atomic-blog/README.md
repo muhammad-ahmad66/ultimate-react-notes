@@ -6,6 +6,11 @@
 2. [Performance Optimization and Wasted Renders](#performance-optimization-and-wasted-renders)
 3. [The Profiler Developer Tool](#the-profiler-developer-tool)
 4. [A Surprising Optimization Trick With children](#a-surprising-optimization-trick-with-children)
+5. [Understanding memo](#understanding-memo)
+6. [Memo in Practice](#memo-in-practice)
+7. [Understanding useMemo and useCallback](#understanding-usememo-and-usecallback)
+8. [useMemo in Practice](#usememo-in-practice)
+9. [useCallback in Practice](#usecallback-in-practice)
 
 ---
 
@@ -183,18 +188,310 @@ And so that is the reason why React then bails out of re rendering this children
 
 ***And so you might actually find situations like this in the real world in your own code. And so in that case just be aware that this trick exists. So all you have to do is to refactor your code a little bit***
 
-Alright. And this is really all I wanted to do with this test component. So let's now get our application back to normal, but this actually has another very interesting implication in the way that our context works right now. So let me again start profiling here and just search once and then stop this.
+Alright. And this is really all I wanted to do with this test component. So let's now get our application back to normal, but this actually has another very interesting implication in the way that our context works right now. So let me again start profiling and just search once and then stop this. And so here we see again that these two components(Main and Posts) have not been re rendered.  
+**But why is that? Why have they not been re rendered?** I mean, there has been a state update inside the post provider component. Right? So the PostProvider is actually just a regular component. And so when we searched, we updated this state(searchQuery) which then re rendered this(PostProvider) component. And so therefore, all the child components should have re rendered as well. Right? So all of the child should have re rendered as well if we follow that logic because all of them are child components.
 
-And so here we see again that these two components have not been re rendered. But why is that? Why have they not been re rendered? I mean, there has been a state update inside the post provider component. Right?
+**However, we see again that these two did not re render And the reason for that is exactly the same that we saw earlier with the test and the slow component.** **So the reason is that all of these child components here were actually passed into the post provider as children.** And so we are in the exact same situation as before where all these child components were already created before they were passed into this component. **And so then React once again bails out of re rendering all of them because they couldn't have possibly been affected by any state change unless, of course, they do actually consume the context itself.** So that's the case for this one.
 
-So this post provider right here is actually just a regular component. And so when we searched here we updated this state which then re rendered this component. And so therefore, all the child components should have re rendered as well. Right? So all of these should have re rendered as well if we follow that logic because again all of them are child components.
+So I hope that made sense and that you keep this technique in the back of your mind even though it is probably not used all the time. But it's very very interesting and I think this like puts you in the top 1% of React developers when it comes to knowing about this kind of stuff.
 
-However, we see again that these 2 did not re render And the reason for that is exactly the same that we saw earlier with the test and the slow component. So the reason again is that all of these child components here were actually passed into the post provider as children. And so we are in the exact same situation as before where all these child components were already created before they were passed here into this component. And so then React once again bails out of re rendering all of them because they couldn't have possibly been affected by any state change unless, of course, they do actually consume the context itself. So that's the case for this one.
+---
 
-Well, now we cannot see that because I reloaded the page in the meantime. So I would need to turn this setting back on, but this only works for the next time. Well, let's just do that now again. Alright. So, yeah.
+## `Understanding memo`
 
-Now we can see that. Let's make this a bit bigger. And so this one here did rerender again because the state has updated. And then this one has changed only because the context has changed, not because the parent component has rerendered. So the same here and the same here.
+Over the next few lectures, we're gonna add three more React tools to your toolbox, the **`memo function`** and the **`useMemo`** and **`useCallback`** hooks.  
+**Now the fundamental concept behind these three tools is memoization. So memoization is an optimization technique that executes a pure function one time.** **So let's say function a, and then it stores the results in memory, so in a cache.**  
+Then if we later try to execute the same function again with the same inputs, it will simply return the result that was previously stored in the cache. So the function will not be executed again. And that makes a lot of sense. So if the arguments are exactly the same as before, it means that in a pure function the output will be the same. Therefore, it makes no sense to execute the entire code again if we can just read the cached result.  
+On the other hand, if the inputs are different then of course the function will simply be executed again. So that's the concept of memoization.  
+**But you might be wondering what this has to do with React. Well, in React we can use this technique to optimize our applications. So we can use the memo function to memoize components with exactly this principle and we can use the useMemo and useCallback hooks to memoize objects and functions.** And doing so will help us prevent wasted renders and improve the overall application speed. Okay.
 
-While again these ones were not re rendered because they were passed in as children and so they were already created before the post provider was even created and so they could not have been affected by any state change in there. Okay. So I hope that made sense and that you keep this technique in the back of your mind even though it is probably not used all the time. But it's very very interesting and I think this like puts you in the top 1% of React developers when it comes to knowing about this kind of stuff.
+![What is Memoization](ss/what-is-memoization.jpeg)
+
+So now that we understand what memoization is, in this lecture **it's time to look at how to memoize components using the `memo function`.**  
+`So react contains a memo function and we can use this function to create a component that will not rerender when its parent rerenders as long as the past props stay the same between renders. Or in other words, we use memo to create a memoized component.`
+
+And if we think about it, this is exactly the optimization technique that I explained in the previous slide. **So the function inputs are props and calling the function multiple times is equivalent to re rendering in react.** And therefore, memoizing a react component means to not re render it if props stay the same across renders. And just like with memoizing regular functions, this makes a lot of sense because why re render the component if the input data hasn't changed at all.
+
+**The regular behavior in React without using memo is of course that whenever a component re renders, the child component re renders as well.** **On the other hand, if we memoize the child component, it will not re-render as long as the props are the same as in the previous render.** Now, of course, if the props do change then the child component will need to re render as well in order to reflect this new data that it received.  
+**`Now it's super important to keep in mind that memoizing a component really only affects props.`** **`This means that a memoized component will still re render whenever its own state changes or whenever there is a change in a context that the component is subscribed to.`** **`Because in these two situations, the component basically has new data that it needs to show in the UI. And so then it will always rerender no matter if it's been memoized or not.`**  
+
+**So from what we just learned, memo sounds great, right? Now, does that mean that we should go ahead and memo all our components?** Well, the answer is no, not at all.  
+
+**So memo is only useful when we're dealing with a heavy component.** So a component that creates a visible lag or a delay when it's rendered.  
+Also, in order for memo to actually make sense, the **component should render quite frequently and it should do so with the same props.** And let's analyze why that is. So first, if the props are usually different between re renders, memo has no effect anyway and then there's absolutely no need to use it. And second, we learned in the 1st lecture of the section that wasted renders are only a problem when the re rendering happens too frequently or when the component is slow in rendering. Therefore, if the component only re renders from time to time or if the component is lightweight and fast anyway, then memorizing brings no benefit at all.
+
+Okay. And now it's time to see this in action in the next lecture.
+
+---
+
+## `Memo in Practice`
+
+Let's now check out a practical example of memoizing a component. So here we are still in the atomic block project, but for these next few lectures, we actually need the original app.js file from the starter files. So let's paste it right here in the project folder, and then I'm gonna rename it to App-memo.js, and then let's place it into the source folder. Okay. So the starter one because there we don't have any context yet and instead we are passing some props around, which is what we need for these next few lectures.  
+Now in the Archive, let's actually remove prop and just add one called show and set it to false.
+
+```jsx
+// App-memo.js
+// App component
+<Archive show={false} />
+```
+
+And then let's come down here to the archive and accept that. So in this lecture, we will actually work with this Archive component. Then here let's make this show archive dependent on this show prop.
+
+```jsx
+// App-memo.js > Archive Component
+function Archive({ show }) {
+  // Here we don't need the setter function. We're only using state to store these posts because the callback function passed into useState (which generates the posts) is only called once, on the initial render. So we use this trick as an optimization technique, because if we just used a regular variable, these posts would be re-created on every render. We could also move the posts outside the components, but I wanted to show you this trick 😉
+  const [posts] = useState(() =>
+    // 💥 WARNING: This might make your computer slow! Try a smaller `length` first
+    Array.from({ length: 10000 }, () => createRandomPost())
+  );
+
+  const [showArchive, setShowArchive] = useState(show);
+
+  return (
+    <aside>
+      <h2>Post archive</h2>
+      <button onClick={() => setShowArchive((s) => !s)}>
+        {showArchive ? "Hide archive posts" : "Show archive posts"}
+      </button>
+
+      {showArchive && (
+        <ul>
+          {posts.map((post, i) => (
+            <li key={i}>
+              <p>
+                <strong>{post.title}:</strong> {post.body}
+              </p>
+              {/* <button onClick={() => onAddPost(post)}>Add as new post</button> */}
+            </li>
+          ))}
+        </ul>
+      )}
+    </aside>
+  );
+}
+```
+
+Alright. Let's just quickly understand what this Archive component does. So basically it creates these 10,000 random posts in the very beginning and stores them into the post state. Now by default all these 10,000 posts are not actually shown because we have the show archive state set to false. At least that's what the incoming prop(show) is.
+
+But as soon as I click on the button(Show archive Posts), it will actually open this list of posts. Now let me actually increase the number here a bit to 30,000. So let's see again that when I click on this button it actually takes a long time for the entire thing to render. So that's probably like almost a second here.
+
+Now the problem is not that it takes a long time to render this list because that's just completely unavoidable. So it's so many items that of course it will take some time. Now the problem is that this will slow down the entire page. See what happens when we type something into the search bar? So notice how this created a big lag. So as we type, it takes like half a second until that letter actually appears there.
+
+And so let's now also inspect this using the profiler. So let me actually reload again so that the archive is closed. And so then we will do a before and after, so before and after showing archive.
+
+Start Profiling. So now I type and it is really fast. But now let's open the archive so we have a second rerender. And then let's type something. And now it is really slow, but just watch how slow that actually is.
+
+So here(in profiler), we have the 3 re renders that happened, and by the size of the bars we can already see that this last one, so the second letter was really slow. So here the first keystroke for the there was just normal. So everything took like 1 millisecond or 3 milliseconds. So something really, really fast.  
+But then what how long it took to render the archive? So it took 131 milliseconds and that's just the rendering itself. So just calling the function then painting the whole thing to the DOM took even longer than that. So probably like one entire second. But anyway, what matters to us is here this second keystroke, so keypress after showing archive.  
+**So notice how the archive re rendered when I typed something. And so the reason for that is of course that the archive is a child component of the app component which is where that state actually lives.** And so if we update the state in the app component that will then, as we already know, trigger a re render in all the child components. And so that includes the archive. And notice how it took even so long that all the other components don't even have space to appear in this flame graph. But if we take a look at the ranked chart then we see all the other components. And so we can see how fast all of them are in comparison to the archive.  
+
+Alright, this is the real problem that we have which is that typing here now makes the entire application really really slow because it always needs to real render this really slow component(Archive Component). **And so this archive component is a perfect candidate for memoization.** So let's do this now in practice.
+
+---
+
+**So the way we do that is to just wrap the entire component function into React's memo function.** So we just call memo which is then imported from React just like use state or use effect. And then we just wrap everything into that function call.
+
+So basically we call memo with a component function as an argument and then this function will return a brand new component. And so then we need to store that component also somewhere and so we create a variable which we call again Archive.
+
+```js
+const Archive = memo(function Archive({ show }) {
+  ...
+})
+```
+
+So the memoized version of the original archive. And we could probably even remove the duplicate name from second Archive and make this an anonymous function but I guess it's best like this. With this we have actually successfully memoized the archive component.  
+
+**And remember that this was a great candidate for memoization because the archive component is very heavy. It re renders very often and it does so with the same props.** So the only prop that it has is this show prop which is always false.
+
+And so let's now do exactly the same profiling that we did before in order to show if it improved our situation. So let's start here. So that was fast because the archive is still closed. And this of course takes exactly the same time as before, which makes sense because as we just learned, memoizing a component has nothing to do with updating state. So memoizing only affects the props. So that list still has to be rendered and so that still takes time. But what should have changed is the time that it takes to now rerender as we type something else here. So let's try that and we can immediately see that this was really fast.
+
+So the prop that it received is show which is always true. And so then this component didn't have to re render as the parent re rendered. And so with this, so with the simple memoization just made our component really fast and snappy again.
+
+Great. So this is why and how we memoize a component in React.  
+
+---
+
+**But now let's do something that will break this memoization so that I can then introduce the next lecture so that we can then solve that problem in the future.** So let's say that now instead of passing in this prop **`<Archive show={false} />`**, I instead want to pass in an object. So let's create an object here called archiveOptions and then let's say show is false and the title let's say, post archive in addition to main posts.
+
+```js
+// App-memo.js > App component
+const archiveOptions = {
+    show: false,
+    title: "Post archive in addition to main posts.",
+  };
+
+// In JSX
+<Archive archiveOptions={archiveOptions} />
+```
+
+And now let's get that in Archive component. And now here we use Archive options.show and here we use archiveOptions.title.
+
+```jsx
+// App-memo.js > Archive Component
+const Archive = memo(function Archive({ archiveOptions }) {
+  const [posts] = useState(() =>
+    Array.from({ length: 30000 }, () => createRandomPost())
+  );
+
+  const [showArchive, setShowArchive] = useState(archiveOptions.show);
+
+  return (
+    <h2>{archiveOptions.title}</h2>
+    ...
+})
+```
+
+Give it a save then let's reload and then let's run exactly the same experiment as before.
+
+**So just typing something here then opening here the archive which has always take some time. And now as I type notice how it will be back to taking a long time. So you saw that? And indeed we are now back to basically re rendering this component even though it is memoized and even though it looks as though our prop hasn't changed. So the archiveOptions that we received still looks the same as before.**
+
+**But still our Archive component was re rendered again. So let's now find out why this is and how we can fix that in the next lecture.**
+
+---
+
+## `Understanding useMemo and useCallback`
+
+In the last lecture, we found a situation where the memo function didn't actually work as expected. And so let's now understand why that happens and learn about the solution. And let's start from what we already know. So we know that **in React, whenever a component instance re renders, everything in there is recreated**. So all values are always created again and that includes objects and functions that are defined within the component.
+
+So a **new render gets new functions and new objects even if they are the exact same ones as before.** We also know that **in JavaScript, two objects or functions that look the same, so that are exactly the same code are actually different unique objects**. And the classic example is that an empty object is different from another empty object. **Now from these two pieces of information we can understand that if we pass a function or an object to a child component as a prop, that child component will always see them as new props whenever there is a re render.** And if props are different between re renders, then memo will simply not work. So it will not do its job.
+
+**`So in summary, if we memoize a component but then give it objects or functions as props, the component will always re render anyway, because it will always see these props as new props even when they actually look exactly the same.`**  
+
+![Issue with Memo](ss/issue-with-memo.jpeg)
+
+Okay, but there must be some kind of solution, right?  
+Well, of course there is. So we can make objects and functions stable. So we can actually preserve them between renders by memoizing them as well. **And to do that, React gives us two more hooks, `useMemo` and `useCallback`.**
+
+We can use `useMemo` to **memoize any value** that we want to preserve between renders and `useCallback` to **memoize functions between renders.** And I will just use the word values for everything here because useCallback is actually just a special case of useMemo.
+
+**But anyway, what does memoization of values actually look like?**  
+Well, the idea is similar to the memoization that we just talked about before. So whatever value that we pass into useMemo or useCallback will basically be stored in memory. And that cached value will then be returned in future re renders. So it will be preserved across renders as long as the inputs stay the same. **Now, in the case of useMemo and useCallback, these inputs that I just mentioned are called dependencies.**
+
+**So just like the useEffect took useMemo and useCallback also have a dependency array.** Whenever one of the dependencies change the value will no longer be returned from the cache but will instead be recreated. So this is very similar to the memo function where a component gets recreated whenever the props change. It's just a different thing that we're memoizing here and a different way of specifying the inputs. But the idea is the same. And this will all become quite clear once we start writing the code. But for now, let's visualize what we just learned.  
+
+**So the regular behavior in React when we do not memoize a certain value is of course that a new value is created whenever the component re renders. On the other hand, when we do memoize the value then no new value is created on re render and the cached value is returned instead.**  
+And so like this, the value will stay exactly the same. So it will be stable across renders. **However, this is only true if the dependencies that we specify in the dependency array don't change.** **If they do change then a new value is actually created as if the memoization has never happened.** Okay.
+
+**Now, this all sounds great, but when do we actually need this?**  
+**Remember that we started this lecture by saying that we need to make objects or functions stable in order to actually make the memo function work.** In other words, if props are objects or functions, we need to memoize these props in order to prevent wasted renders. So that's what the very first slide of the lecture was all about, right? And this use case is probably the biggest use case for useMemo and useCallback. And it made it very easy to understand why there is a need for these hooks.
+
+However, there are actually two additional use cases. **So the second use case is to avoid expensive recalculations on every render.** For example, you might have a derived state that is calculated from an array of 100,000 items. Now, if your component re renders all the time, then React needs to do this expensive calculation over and over again each time there is a render.  
+And so to fix this you can simply preserve the result of that calculation across renders using useMemo. And so then, React doesn't have to calculate the same thing time and time again.
+
+**Finally, another use case is memoizing values that are used in the dependency array of other hooks.** For example, in order to avoid infinite useEffect loops.
+
+**Now just like with the memo function, it's important to not overuse these hooks.** So you should probably only use them for one of these three use cases and not start memorizing every single object and function everywhere. But anyway, with all this being said, it's time to finally try this out with code.
+
+---
+
+## `useMemo in Practice`
+
+**Let's now use the useMemo hook to fix that problem that we created ourselves with the archive component earlier.** So remember how earlier we created an object(archiveOptions) and then pass that as a prop into the archive component. Now the problem with this is is that doing so actually breaks the memoization that we created for the archive component.
+
+So as we just learned in the previous lecture, the reason for that is that this object is recreated over and over again each time that the App component re renders. And so basically, then the prop that the archive receives will always be different. And so then, of course, memo doesn't do anything. So what we need to do is to make this object stable over time. And so that's where the useMemo hook comes into play.
+
+So let's use that hook. So useMemo which again needs to be imported from React. So let's call that but now it is actually not as simple as just wrapping this entire object(archiveOptions) into useMemo. So that's not how it works.  
+**Instead use memo actually takes in a callback function which will be called on the initial render.** So very similar to the useState hook. So in this case, all we need is an arrow function which we want to return our object. **So this callback function is basically the work that should be performed on the initial render and which result should be then stored in the cache.** So should be stored in memory so that react can remember it across re renders.
+
+```js
+const archiveOptions = useMemo(() => {
+  return { show: false, title: "Post archive in addition to main posts." };
+}, []);
+```
+
+Now in this case all we're doing is to return an object but there could be also some more intensive calculation going on which is the reason why useMemo takes in a function and not just a value. Alright. So again, **whatever we return from this callback function will be saved in the cache.**
+
+**And so then remember we also need to pass in the dependency array as a second argument, which will basically determine when this whole calculation here is executed again.** So just like the useEffect took, right?
+
+**So by specifying an empty dependency array here that means that this value will only be computed once in the beginning and will then never change.** So it will never be recomputed. And so this⤴️ should actually already have fixed it.
+
+And of course, we want to profile this again. So this is fast as always. Then we just open this again, which takes its time. And now we will see if that memoing has worked. And it was really fast so it looks like it did and indeed the archive was not rendered in the beginning and also not as it was already opened. Great, so we fixed the problem and or memoized component is now back to working. So we have now this stable value over time which will simply be taken from the cache as long as the dependencies don't change.
+
+And speaking of the dependencies, right now we don't have any dependency but actually let's create some or at least one. So here I now want to change the title to use a stateful variable. So to use the, the post.
+
+So now here I want to say post archive in addition to and then the number of the main posts. So that is post.length.
+
+```jsx
+const archiveOptions = useMemo(() => {
+  return {
+    show: false,
+    title: `Post archive in addition to ${posts.length} main posts.`,
+  };
+}, []);
+```
+
+And so now we need to specify that value here in the dependency array because otherwise this object here will never be recomputed. And so let me first show you that actually this is how it works. So right now it says here in addition to 30 main posts. So let's add another one and watch what happens. So here it now says that 31 posts were found but down here we still say 30. And so that's because react is still reading this object from the cache which it didn't update because we didn't place this post variable into the dependency array. And so therefore, this function here was never called again and so then react is still using the stale value of this post state.
+
+So here we are again in the presence of `stale state` and of a `stale closure`. **So a stale closure because this function here was created initially and from there on it now remembers all the variables that are referenced inside of it as they were at the time that the function was created. So that's what a closure is and it is a stale closure because it never run again.** And so it is still remembering the old values. So that's one of the weird things about React which is very confusing for beginners. But that's why I'm talking about this time and time again because this is the kind of stuff that you really need in order to master React.
+
+But anyway, let's now then place the entire thing here into the dependency array. So not just posts but really posts.length which is a lot better because post is an object and posts.length is a primitive. So it's always best to have primitives in the dependency array. And we will learn more about that even later in this section.
+
+```jsx
+const archiveOptions = useMemo(() => {
+  return {
+    show: false,
+    title: `Post archive in addition to ${posts.length} main posts.`,
+  };
+}, [posts.length]);
+```
+
+But anyway, you can see that it actually already updated there to 31 but let's change this again or test this again. So 31 up there and beautiful. Now it updated down here as well.  
+Now the consequence of this is that whenever this archive is open it will then take a long time to rerender the application when we add a new post. Right?
+
+So let's check that. And now I will just call something very short so that we don't get all those re renders in the profiler. And then notice how that took some time. And so indeed we can see that here in this last state update where now the archive of course still had to re render because now this time our object here actually has been recreated. So we added a new post and therefore posts dot length was changed And so then this object here became a new object making it so that the prop changed which in turn triggered the archive to be re rendered as a result even though it is memoized.
+
+Okay, So hopefully all of this made sense and later on we will actually see another use case of the useMemo hook. But for now let's move on to the use callback hook.
+
+---
+
+## `useCallback in Practice`
+
+After useMemo, now it's time to quickly also use useCallback. **And the goal of the useCallback hook is to memoize functions.**
+
+And so to test this, let's now pass in a function again into the archive component. So let's now bring back the on addPost prop that we had here initially. So on addPost should be handleAddPost.
+
+Now the problem with that is is that now we are back to having the same issue as before. So let's again Well, first let's close this actually so that we have the before and after. And actually let's this time test with this button here. So this fake dark mode button also changes state on the app component. And so it will also re render the archive. So let's click that then let's open the list and then let's set the state again. And so maybe you saw that it took a long time. And, yeah, so we are back again to having our memoized component rerender even though it is memoized. **So we had the same problem earlier in the previous lecture because of this prop which is an object but we solved that by memoizing it using useMemo. And so now we have the same problem but with a function.**
+
+**And the solution is the same. So the solution is also to now memoize the function. And so let's do that by using the useCallback hook make sure that it gets imported from react and then the dependency array which is empty. And so this will then return the memoized function which we can then store into a regular const variable.** Okay. And that's actually it.
+
+```js
+const handleAddPost = useCallback(function handleAddPost(post) {
+  setPosts((posts) => [post, ...posts]);
+}, []);
+```
+
+**`useMemo` and `useCallback` are pretty similar but the difference is that `useCallback` will not immediately call the function, but will instead simply memoize the callback function. While `useMemo` will simply memoize the result of calling the callback function.** So that's the main difference. useMemo just stores a result, so like a value which is the result of callback while in useCallback only the function itself is actually memoized.
+
+Alright. And so this should already be enough to solve our problem.
+
+**Some teams for some reason choose to wrap each and every function and value into a useCallback or a useMemo.** **But** that actually makes very little sense and it might even do more harm than good in most of the cases. So using one of these functions useCallback actually has a cost as well. So React needs to run the function/object and needs to store the function in memory. And so that only makes sense if we actually see some improvement in our application.
+
+*Now one thing that I wanted to mention is that in the future the need to doing any of this stuff, like any of the **memoization** might actually **disappear** completely because the React team is currently researching a compiler that would basically automatically memoize all the values that need memoization behind the scenes.*
+
+But still, even with that on the horizon, it is still very good to know about all of this stuff. `1st`, because that **compiler might actually never happen**, and `second`, because you will still see these hooks here all the time in a bit older code basis.
+
+And finally, I want to just quickly finish with a small experiment. So let's pass in another function into our Archive component but this time a special one. So let's say this `setIsFakeDark` function and I say special because this is the function that is returned from `useState`. So we are now passing a callback function as a prop which we did not memoize.
+
+```jsx
+// in App Component
+const [isFakeDark, setIsFakeDark] = useState(false);
+
+<Archive
+  archiveOptions={archiveOptions}
+  onAddPost={handleAddPost}
+  setIsFakeDark={setIsFakeDark}
+/>
+```
+
+So let's see if that will then again slow down our component. So let's record. Maybe you noticed that actually the archive did not re render. **The memoization is indeed still working. Even though we did not memoize `setIsFakeDark`.** **So why do you think that is?**  
+**Well, basically react guarantees that the setter functions of the useState hook always have a stable identity which means that they will not change on renders.** So we can basically think of the state setter functions as being automatically memoized. **And in fact this is also the reason why it's completely okay to omit them from the dependency arrays of all these hooks.** So from useEffect useCallback and useMemo.  
+
+Okay. Now that's actually all I had to tell you about these three important tools. So **memo**, **useMemo** and **useCallback**.  
+And actually, next up we will use some of these tools a bit more to optimize context.
+
+---
+
+## `Optimizing Context Re-Renders`
 
 ---
