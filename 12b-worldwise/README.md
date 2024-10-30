@@ -18,6 +18,8 @@
 13. [Adding Fake Authentication Implementing Login](#adding-fake-authentication-implementing-login)
 14. [Adding Fake Authentication Protecting a Route](#adding-fake-authentication-protecting-a-route)
 15. [CHALLENGE-2 Refactoring React Quiz to Context API](#challenge-2-refactoring-react-quiz-to-context-api)
+16. [Back to The WorldWise App From Performance Optimization](#back-to-the-worldwise-app)
+17. [Optimizing Bundle Size With Code Splitting](#optimizing-bundle-size-with-code-splitting)
 
 ---
 
@@ -2602,5 +2604,249 @@ See in React Quiz App
 ---
 
 ***`27 / 09 / 2024`***
+
+---
+---
+
+---
+---
+
+`Back from Performance Optimization [memo, useMemo, useCallback]`
+
+## `Back to The WorldWise App`
+
+It's time to shortly go back to the world wise application in order to see whether there are any performance issues and whether there is anything that we need to optimize in terms of wasted renders.
+
+And so now I want to use the profiler here as well. So just like we did previously in that other application. And let's actually make this window a bit bigger so that we can see exactly what's gonna happen. So what I want to do for now is just record walking through the entire application to check if there are any performance bottlenecks. So to see if there is any component that might perform really badly.
+
+So let's start profiling and then let's just follow the flow of the application. So we can go to all of these different components or pages.
+
+So we created 21 renders in total. And so let's now see if any of them was really slow. So in order to identify some really bad performing components, it's best to come here to the ranked tab.
+
+So it seems like in this application we have absolutely no problem with performance, which of course is very nice to see.
+
+Okay. Now let's go back to our code to see what we can do. And actually not a lot because everything is working really fluidly. So earlier we were optimizing our context but here there's not much to do.
+
+There's not really a need to memoize this value from the CitiesContext because we don't have any component above this provider in the component tree that might re render this one. And so I think that there's actually nothing to do in CitiesContext.
+
+Now let's just remember that there was some issue earlier. And so we are now actually ready to fix that. So if we come back to our City.jsx, remember that in the useEffect we left out the getCity function. *So here we see that issue where ESLint is telling us to add the get city. But remember that this created like an infinite loop of HTTP requests to our API.* But let's put getCity in dependency array.
+
+```jsx
+useEffect(
+  function () {
+    getCity(id);
+  },
+  [id, getCity]
+);
+```
+
+Let's just reload the page and come actually to the network tab, clean all of this, and then watch what happens when I click on one of these cities. And indeed, immediately we get like a 1,000 requests and it keeps going even though the number here is not going up. Now we can even see the same in the profiler. So if we go back and then start profiling, clicking on any city, and then I will just leave it for a few seconds, That should be enough. And you see that we have 60 state updates only in this, like, 3 seconds that I waited.
+
+**And so clearly, there is something wrong here. And this is the only thing that we need to fix now using the tools that we learned before.**
+
+But first of all, of course, we need to understand what is actually happening. So now that we have getCity function in our dependency array, the effect will re-run each time that the getCity function gets updated or in other words that it gets recreated.
+
+**Now when does this function get recreated?**
+
+Well, since it lives in the context. So it is created in this citesProvider. But the problem is that this getCity function will update the state each time that it is executed, which will then end up in an infinite loop. So in useEffect we call the getCity function. And so that function will then update the state in CitiesContext component. Then this component will re render which will recreate getCity function. And as the function gets recreated since it is in the dependency array then getCity will get called again which then again will update the state which will re render which will cause the effect to run over and over and over again.
+
+**How do you think we can fix this?** **So the solution is not to remove getCity function from the dependency array because that is not allowed in React. Instead what we need to do is to make this function stable.** So we need it to not be recreated on each re render. And the way we do that as you hopefully know is by using the `useCallback` hook.
+
+So let's create a new variable which will be the new getCity function and this will then be the result of calling use callback. Then our dependency array which will need probably this currentCity.id.
+
+```jsx
+const getCity = useCallback(
+  async function getCity(id) {
+    if (Number(id) === currentCity.id) return;
+
+    dispatch({ type: "loading" });
+    try {
+      const res = await fetch(`${BASE_URL}/cities/${id}`);
+      const data = await res.json();
+      dispatch({ type: "city/loaded", payload: data });
+    } catch (err) {
+      dispatch({
+        type: "rejected",
+        payload: "There was an error loading the city...",
+      });
+    }
+  },
+  [currentCity.id]
+);
+```
+
+*Just having this kind of warning is reason enough to really always install ESLint in your projects. So without it you will create so many bugs.*
+
+So this is one of these real world situations in which we will really need to reach for this tool(useCallback, useMemo etc). So that's why it's really important that you paid good attention throughout this section.
+
+And actually remember that when I first introduced these hooks this was exactly one of the 3 use cases that I talked about. **So memoizing values that are used in the dependency array of another hook in order to prevent infinite loops.**
+
+---
+
+## `Optimizing Bundle Size With Code Splitting`
+
+So we've talked a lot about optimizing wasted renders and overall app performance. However, probably the most important thing that we can and **should optimize is the bundle size**.
+
+And so let's now learn how to do that. But before we go check out the code, we first need to understand what that bundle actually is. And let's start at the very beginning.
+  
+So whenever some user navigates to our application, they are basically visiting a website that is hosted on some server. So that's just how every single website and web application work. Now once the user actually navigates to the app, the server will send back a huge JavaScript file to the client that is requesting it. And this file is the bundle.
+
+**So the bundle is simply a JavaScript file that contains the entire code of the application. And it is called a bundle because a tool like Vite or Webpack has bundled all our development files into one huge bundle, which contains all the application code.** This means that once the code has been downloaded, the entire react application is loaded at once, which essentially turns it into a single page application that is running entirely on the client. So whenever the URL changes in the app, the client just renders a new react component, but without loading any new files from the server because all the JavaScript code is already there in the bundle. **The bundle size is the amount of JavaScript code that every single user needs to download in order to start using the application.**  
+So if the bundle has, for example, 500 kilobytes then all those bytes need to be downloaded before the app even starts working. And of course, the bigger the bundle, the longer it's gonna take to download, which can become a huge problem. Therefore, bundle size is probably the most important thing that we need to optimize. And thankfully for us and for our users, it's not very hard to do. **So we can just use a technique called `code splitting`.**
+
+![!Bundle-And-Code-Splitting](ss/bundle-and-code-splitting.jpeg)
+  
+**`Code splitting` basically takes the bundle and splits it into multiple parts. So instead of just having one huge JavaScript file, we will have multiple smaller files which can then be downloaded over time as they become necessary for the application. And this process of loading code sequentially is called `lazy loading`.** And this really is one of the biggest performance gains that you can achieve for your users. And so let me now show you how it's done in practice.
+
+Now there are many ways in which we can split the bundle. So in which we can lazily load our components.  
+**The most common one is to split the bundle at the route level or in other words at the page level. So basically what we're gonna do is to take all the components that represent a page and load each of them separately.**
+
+That's what most applications do, but of course we don't have to do it this way because this feature has really nothing to do with react router. So any component can be lazy loaded in the way that I'm gonna show you.  
+So let's actually do that. And so let's first identify our pages. So it's the `homepage`, the `product`, the `pricing`, the `login`, then here the `application` itself which is an app layout, and finally page `not found`. So those are our 6 pages in our App.jsx.  
+
+And so let's comment out all the import statement and we will now lazy load these. **So instead of writing import let's now write just the name of the component, for example, homepage, and then we use React's lazy function.**
+
+```jsx
+import { lazy } from "react";
+
+// import Product from "./pages/Product";
+// import Pricing from "./pages/Pricing";
+// import Homepage from "./pages/Homepage";
+// import Login from "./pages/Login";
+// import AppLayout from "./pages/AppLayout";
+// import PageNotFound from "./pages/PageNotFound";
+
+const Homepage = lazy();
+```
+
+So this lazy function here is actually a feature that is built into React and then Vite or Webpack, they will automatically split the bundle when they see this lazy function.
+
+Now actually thinking of these bundlers I had the idea that I should even show you how the bundle looks like right now before we do lazy loading.
+
+Just run the following command in terminal
+
+```bash
+npm run build
+
+
+# Now the size of bundled files
+dist/assets/index-80383d0a.css   29.96 kB │ gzip:   5.07 kB
+dist/assets/index-f4b8bec1.js   509.64 kB │ gzip: 148.79 kB
+```
+
+Let's actually implement the lazy loading. And so in lazy function we now need a callback function which will then call the dynamic import function, which is actually part of JavaScript. And so there we then need the path to the component itself.
+
+```jsx
+const Homepage = lazy(() => import("./pages/Homepage"));
+const Product = lazy(() => import("./pages/Product"));
+const Pricing = lazy(() => import("./pages/Pricing"));
+const Login = lazy(() => import("./pages/Login"));
+const AppLayout = lazy(() => import("./pages/AppLayout"));
+const PageNotFound = lazy(() => import("./pages/PageNotFound"));
+```
+
+That should be it. Let's reload this at the root. And for now everything is working fine.
+
+**But this is actually not yet the end of the story. So this is only the first part, but now we also want to display a `loading spinner` while we go from one page to the other one.** So basically while these pages are gonna be loaded in the background.
+
+**This is now where the React `suspense API` comes into play for the first time.**  
+**`Suspense` is a concurrent feature that is part of modern React and that allows certain components to suspend, which basically means that it allows them to wait for something to happen.** And in our case, these lazy components are gonna be suspended while they're loading. **And so we can then use the built in suspense component to show a fallback,** which in our case is gonna be that loading indicator that I just mentioned.
+
+So let's come into our tree in App.jsx and above the **`Routes`** let's then include **`Suspense`**. So making sure that component has been included from React and then here is where we specify the fallback prop.  
+
+```jsx
+import { lazy, Suspense } from "react";
+import SpinnerFullPage from "./components/SpinnerFullPage";
+
+<Suspense fallback={<SpinnerFullPage />}>
+  <Routes>
+
+  </Routes>
+</Suspense>
+```
+
+So here this then takes a React element which is going to be our Full page spinner component. So **SpinnerFullPage**.
+
+```jsx
+function App() {
+  return (
+    <AuthProvider>
+      <CitiesProvider>
+        <BrowserRouter>
+          <Suspense fallback={<SpinnerFullPage />}>
+            <Routes>
+              <Route index element={<Homepage />} />
+              <Route path="product" element={<Product />} />
+              <Route path="pricing" element={<Pricing />} />
+              <Route path="/login" element={<Login />} />
+              <Route
+                path="app"
+                element={
+                  <ProtectedRoute>
+                    <AppLayout />
+                  </ProtectedRoute>
+                }
+              >
+                <Route index element={<Navigate to="cities" replace />} />
+                <Route path="cities" element={<CityList />} />
+                <Route path="cities/:id" element={<City />} />
+                <Route path="countries" element={<CountryList />} />
+                <Route path="form" element={<Form />} />
+              </Route>
+              <Route path="*" element={<PageNotFound />} />
+            </Routes>
+          </Suspense>
+        </BrowserRouter>
+      </CitiesProvider>
+    </AuthProvider>
+  );
+}
+```
+
+And with this we should be good to go.
+
+### `Short Recap`
+
+With lazy loading we will now load each of the components as we need them, which will basically automatically split our bundle into separate chunks. And it is Vite in our case here that's gonna take care of that. And so then, of course there will be a time while we navigate from one page to the other where that chunk has not been downloaded yet. So for example if we go to login then that page has not been downloaded. **And so then this entire thing, so this lazy functionality is powered by the suspense API.** And so that will make the component basically suspended in the meantime, which will then display the loading spinner. And then once that has arrived, it will no longer be suspended and then the content, so the **children of the suspense** is gonna be displayed. So it's gonna be rendered. So let's see if that works, and let's actually do some throttling here like a slow 3g so that we can actually see this happening.
+
+So our app layout which is the main part of the app and so that's why that takes a bit longer. Okay. Great. And of course, now if we go back, so the second time everything is gonna work really fluidly. Beautiful.
+
+So this really is the most important feature I would say that we should always implement in any React application that we're building.
+
+And now to finish, let's just see the actual chunks that Vite has created for us. So npm run build. So these chunks here are not gonna be exactly the same ones as in development because in development everything is a bit different. So this year is already optimized for production and so we see that it all is very different.
+
+```bash
+dist/assets/Logo-515b84ce.css             0.03 kB │ gzip:   0.05 kB
+dist/assets/Login-f39ef3ff.css            0.35 kB │ gzip:   0.22 kB
+dist/assets/Product-cf1be470.css          0.47 kB │ gzip:   0.27 kB
+dist/assets/PageNav-d3c5d403.css          0.51 kB │ gzip:   0.28 kB
+dist/assets/Homepage-380f4eeb.css         0.51 kB │ gzip:   0.30 kB
+dist/assets/AppLayout-c49eff02.css        1.91 kB │ gzip:   0.70 kB
+dist/assets/index-bc46b829.css           26.29 kB │ gzip:   4.39 kB
+dist/assets/Product.module-02d70b80.js    0.06 kB │ gzip:   0.07 kB
+dist/assets/PageNotFound-76345d1b.js      0.15 kB │ gzip:   0.15 kB
+dist/assets/Logo-3d9995eb.js              0.21 kB │ gzip:   0.19 kB
+dist/assets/PageNav-21d573e9.js           0.54 kB │ gzip:   0.28 kB
+dist/assets/Pricing-1a60ac6e.js           0.65 kB │ gzip:   0.41 kB
+dist/assets/Homepage-023b2e86.js          0.67 kB │ gzip:   0.41 kB
+dist/assets/Product-bad98dc9.js           0.86 kB │ gzip:   0.49 kB
+dist/assets/Login-3e5f39d4.js             1.04 kB │ gzip:   0.55 kB
+dist/assets/AppLayout-654539fc.js         7.27 kB │ gzip:   2.83 kB
+dist/assets/leaflet-src-3b9745fd.js     149.57 kB │ gzip:  43.34 kB
+dist/assets/index-35f22fc7.js           351.12 kB │ gzip: 102.05 kB
+```
+
+So we have lots of different chunks now here which are then all lazy loaded. So you see that we still have a huge one right at the end. Alright. So we could now try to lazy load some other components.
+
+So remember that it doesn't only work with routes, but I think that this is good enough. So for example the AppLayout itself was apparently 156 kilobytes. And so it's really nice that we got that out of the main bundle. And notice how even the CSS is also split into multiple parts. Alright.
+
+**So really nice feature and, yeah, again powered by both the bundler, so Vite or Webpack and the lazy function provided by React plus the import function provided by JavaScript and then also the suspense component.**  
+
+And with this, we have now actually finally really completed this world wise application. So this was the last video in which we worked on this project. And so once again, congratulations for finishing this big project where we learned so many new things and covered so much ground.
+
+---
+
+**`30/10/2024`**  
+**`Yougo House Rawalpindi`**
 
 ---

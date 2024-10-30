@@ -11,6 +11,8 @@
 7. [Understanding useMemo and useCallback](#understanding-usememo-and-usecallback)
 8. [useMemo in Practice](#usememo-in-practice)
 9. [useCallback in Practice](#usecallback-in-practice)
+10. [Optimizing Context Re-Renders](#optimizing-context-re-renders)
+11. [Back to The WorldWise App](#back-to-the-worldwise-app)
 
 ---
 
@@ -493,5 +495,119 @@ And actually, next up we will use some of these tools a bit more to optimize con
 ---
 
 ## `Optimizing Context Re-Renders`
+
+Let's now take a look at a **few strategies that we can use in order to prevent wasted renders related to the context API**. And for that let's actually come back to our app.js which is the one where we already use our context. So notice how here we don't pass around any props anymore and we use our custom hook that is coming from our context.
+
+Okay. And now let's see what we can do in PostContext.js to optimize this a little bit.  
+**But before we go do that, it's actually very important to understand that you only need to optimize your context in case that three things are true at the same time.**
+
+1. **The state in the context needs to change all the time.**
+2. **The context has many consumers.**
+3. And 3rd and probably most importantly, **the app is actually slow and leggy.**
+
+So only if all of these are true, it is time to optimize context. The actual optimization of your context can be quite confusing because it's gonna depend a lot on how you build your application and how you set up your context and also what exactly you pass into the context. And so I cannot give you a clear recipe here but I will just try to show you a few different things here.
+
+So first of all remember that we are already doing that optimization where we pass the children into the component. So what we render are simply the children that we pass in to the PostProvider. **And so remember from earlier that this makes it so that these children are not all automatically re rendered because they were already created before they were actually passed into PostProvider component.**  
+And so this alone is already a good optimization technique. So if we just had basically this PostProvider right in the app.js file, So basically what we did earlier in App-v1.js. There we had children directly inside the post context provider. And then all of these children would also automatically have been re rendered as we changed the state inside that context. **So we already have that optimization going on, but if for some reason you are not doing that then you should memo all of the direct children of that context.** So basically what we did earlier which is to wrap Header component and the Main and the Footer all into a memo. So memoizing those components so that they don't automatically re render once we update the state in the context.
+
+So that's one of the guidelines that I can give you. So **doing either the technique with the children** or to **memoize the direct descendants of the context**.
+
+Now next up, let's try to see what happens when we update the state in the application above our provider, for example, change dark/light mode. This state lives in the App component but since the PostProvider is a children of that, it will then also automatically rerender. And so let's see what happens then.
+
+And for that let's also turn on again this setting here, so recording why each component rendered. Then let's clean this. Let's clean this as well, and then let's just start recording. And now what I'm gonna do again is to change the state in a component that is above our custom provider component. So let's see what happens. And indeed, now all the components did re render. **However, they did re render for a different reason that we might think.** So of course app itself was rerendered because the state changed but then the Main was rerendered because the parent rerendered. So that makes a lot of sense. Right? The same here in Posts component and then we would expect the same to also happen in the List.  
+
+**However, the list did actually re render because the context changed.** Well, that's strange, right? Because this state with the dark mode actually has nothing to do with context. But still, all the components that consume the context did now re render because of context. So the same thing in the Archive as well. And just keep in mind that we are now working with a different app where we no longer have the archive memoized. Remember?
+
+But anyway, we would have thought that all of these components re rendered because their parent re rendered which is what makes sense for these 2, for example, not because the context changed. So why does that appear here? Well, the reason is that this value right in the PostContext.Provider is an object, right? And this post provider is a child element of the app component. And so therefore when the app component re renders then this PostProvider re renders as well and therefore this object will be recreated. And so if this object will be recreated it means that the context value has changed. And therefore, all the components that consume that context are going to be re rendered.  
+Alright. So that's the reason why here we see that the context has changed because actually it did change because this value, so this object did update.
+
+So the solution for that is to memoize this object.
+
+```jsx
+const value = useMemo(() => {
+    return {
+      posts: searchedPosts,
+      onAddPost: handleAddPost,
+      onClearPosts: handleClearPosts,
+      searchQuery,
+      setSearchQuery,
+    };
+  }, []);
+```
+
+Now as we save this, this will create a few additional problems. So let's see. And so indeed, we are now missing the searchQuery and the searchedPosts in dependency array.
+
+So we didn't actually fix the wasted render itself, but we did fix the fact that this render was caused by our context.
+
+And so if we were to memo now these components, for example let's try out the Main component, then none of these components should render anymore. Now again in this case since we don't really have this app very slow there's no need really to memo this but all this is more to show you. Just like this:
+
+```jsx
+const Main = memo(function Main() {
+  return (
+    <main>
+      <FormAddPost />
+      <Posts />
+    </main>
+  );
+});
+```
+
+Now, actually I was expecting that React would ask me to also include these two functions(handleAppPost and handleClearPosts) into the dependency array because it seems to me that they are also dependencies of this object. So in case you get that then you need to these to the dependency array but if you do that then you also will need to wrap these tow handler functions into a useCallback because otherwise on each re render these functions will be recreated again which will then in turn also make this object to be recreated again. Alright? But in this case that didn't really happen.  
+Let me just see what happens if I do handle that post here. Yeah. So then I get that warning that I was just telling you about which is that `this function makes the dependencies of the use memo hook change on every render. So move it inside that callback or wrap it in its own use callback.`
+
+Let's finally also check what happens when we update the state that is actually part of the context itself. So, let's search a post. Then of course all the components that, consume this context are re rendered. So that's the List, the SearchPosts, the Header itself and the Archive. So here we always have all of them and then we can see that also all of these were re rendered because context has changed. **Now I'm showing you this because if you have many many components that are subscribed to a context, so that read data from a context it will become problematic to have so many different variables inside the context value.** Because as soon as you change one of these states, then all of the components that read at least one of these five values will get re rendered.  
+And so again, this is not ideal and it's the reason why in the beginning I told you that **we usually create one context per state.** So we would have one post context and one search query context. And so in that situation whenever we updated for example the search query then all the components that consume the post would not get re rendered. While in this case, all of them are because it is enough for one value here to change to re render the entire thing.
+
+Now, I'm not gonna do that right here but again, you can basically create one context for Posts(Posts, onAddPost, onClearPosts) and one context for search(searchQuery, setSearchQuery). And then what some people do is to even take it one step further. So inside the search query context, you could even create one context only for the search query and one only for the state updater function. **Or if you're using a reducer, you could then create one context for the state and one context for the dispatch function.**
+
+These were just a few general guidelines that I hope will become useful for you in the future.
+
+---
+
+## `Back to The WorldWise App`
+
+It's time to shortly go back to the world wise application in order to see whether there are any performance issues and whether there is anything that we need to optimize in terms of wasted renders. So here we are back in the world wise application and in case you had closed your editor before, just make sure that you start both the fake API server and the application again. Alright. And then let's come here to our application. Let's just make sure to reload.
+
+And so now I want to use the profiler here as well. So just like we did previously in that other application. And let's actually make this window a bit bigger so that we can see exactly what's gonna happen here. So what I want to do for now is just record walking through the entire application to check if there are any performance bottlenecks. So to see if there is any component that might perform really badly.
+
+So let's start profiling and then let's just follow the flow of the application. So we can go to all of these different components or pages and then of course we can log in. We can click somewhere here, go back, click on a city, maybe on the countries, maybe here, and then log out. So just experimenting everything and then let's finish. And you see that we have a lot of renders.
+
+So we created 21 renders in total. And so let's now see if any of them was really slow. So in order to identify some really bad performing components, it's best to come here to the ranked tab. And so we see that the component that took the most time in the first render was this routes. So that took like less than 1 milliseconds which is really nothing.
+
+So remember that in the previous app when we were experimenting with the archive, we sometimes had like 200 milliseconds or 100 milliseconds. And of course these values are different on your computer than they are on mine, different but still. This is like an order of magnitude faster than what we had before. So nothing to worry here and so let's keep going. So we just click here and then we see all the components that rendered and how fast.
+
+So let's just quickly go through them just to identify if anything was like really slow. So the most that we saw up until this point, it's this one, 2 milliseconds which again is really nothing. So it seems like in this application we have absolutely no problem with performance, which of course is very nice to see. So let's just clean this and maybe let's just analyze one state transition here. So maybe here with this login part just to see a bit what actually happens.
+
+So just that navigation was actually for state updates. So here in the flame graph, we can see that first the auth provider was re rendered which then made the login form and all its children re rendered. Then next up we saw that our router basically rerendered. So in order to move us to the next page, so that's all of this stuff right here. And of course to start seeing that once we add all of these components to our tree, it becomes all a bit more confusing.
+
+Alright. Now what do we have here? This is probably coming from the react leaflet library. So it's inside the map and then here we have some components that are updating inside there. And so, yeah, these are related to positioning the map probably.
+
+And then finally we have another render which was caused by our router. So that's what we can see here on the side. So as we go through here we can always see what caused this update. So here it was again the router and here it was the auth provider. So because we locked the user in then the auth provider re rendered which then triggered all of this.
+
+Okay. And of course you can now analyze this a lot more if you feel like and if you want to have some fun with this tool. But for now let's go back here to our code to see what we can do. And actually not a lot as I was saying because everything is working really fluidly. So earlier we were optimizing our context but even here there's not much to do.
+
+Let's just delete this use state that we no longer need. But yeah, so again there is not a lot to optimize here in this context. So that's because we don't have any performance issues and also because the way that we set up our context value. So remember how earlier we decided that we want to pass in all of these functions into the context value. And so therefore it wouldn't be practical to create one separate context for each of them, right?
+
+So that's one of the strategies that I mentioned earlier but that's not really practical and also not necessary here. Also, there's not really a need to memoize this value right here because we don't have any component above this provider in the component tree that might re render this one. And so there's no point in doing that And so I think that there's actually nothing to do here which is good. Now let's just remember that there was some issue earlier. And so we are now actually ready to fix that.
+
+So if we come back here to our city remember that in the useEffect we left out the get city function. So here we see that issue where ESLint is telling us to add the get city. But remember that this created like an infinite loop of HTTP requests to our API. But let's do that again now. So, get city then let's just reload here and maybe let's come actually to the network tab, clean all of this, and then watch what happens when I click on one of these cities.
+
+And indeed, immediately we get like a 1,000 requests and it keeps going even though the number here is not going up, but we can also see down here that every second or so there is a new request coming in. And even here, it's of course also very visible. Now we can even see the same in the profiler. So if we go back and then start profiling, clicking here, and then I will just leave it for a few seconds, That should be enough. And you see that we have 60 state updates only in this, like, 3 seconds that I waited.
+
+And so clearly, there is something wrong here. And this is the only thing that we need to fix now using the tools that we learned before. But first of all, of course, we need to understand what is actually happening. So now that we have this get city function in our dependency array, the effect will rerun each time that the get city function gets updated or in other words that it gets recreated. Now when does this function get recreated?
+
+Well, since it lives in the context So let's open that. So this file, get city, lives here. So it is created in this city's provider. But the problem is that this get city function will update the state each time that it is executed, which will then end up in an infinite loop. So here we call the get city function, right?
+
+And so that function will then update the state in this component. Then this component will re render which will then recreate this function. And as the function gets recreated since it is here in the dependency array then get city will get called again which then again will update the state which will re render which will cause the effect to run over and over and over again. So that's the infinite loop that we have right here and probably we should come back here and now take our application out of this misery. So it's been fetching like for a few minutes now, so that's a bit too much.
+
+But anyway, how do you think we can fix this? So the solution is not to remove this from the dependency array because that is not allowed in React. Instead what we need to do is to make this function stable. So we need it to not be recreated on each re render. And the way we do that as you hopefully know is by using the useCallback hook.
+
+So let's create a new variable which will be the new get city function and this will then be the result of calling use callback. Alright. Then our dependency array which will need probably this current city and there it is. So current city dot ID and once again just having this kind of warning here is reason enough to really always install ESLint in your projects. So without it you will create so many bugs.
+
+It's it's not gonna be funny really. But anyway, this now shows you a real world use case of this hook. So of this use callback hook right here. So this is one of these real world situations in which you will really need to reach for this tool. So that's why it's really important that you paid good attention throughout this section.
+
+And actually remember that when I first introduced these hooks this was exactly one of the 3 use cases that I talked about. So memoizing values that are used in the dependency array of another hook in order to prevent infinite loops. So let's give it a reload here, and then let's just try it again. And if we come here to our network tab then we see that there is no problem anymore. And also here we are not seeing these infinite requests coming in.
+
+Alright. And this is actually all that I wanted to show you in this lecture. And I can understand that it probably seems pretty intimidating for example to find out by yourself that this would have been the solution here. But trust me that with practice and with study you will be able to really understand and to master all these tools.
 
 ---
