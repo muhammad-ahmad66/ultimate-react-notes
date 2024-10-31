@@ -12,7 +12,10 @@
 8. [useMemo in Practice](#usememo-in-practice)
 9. [useCallback in Practice](#usecallback-in-practice)
 10. [Optimizing Context Re-Renders](#optimizing-context-re-renders)
-11. [Back to The WorldWise App](#back-to-the-worldwise-app)
+11. [Back to The WorldWise App From Performance Optimization](#back-to-the-worldwise-app)
+12. [Optimizing Bundle Size With Code Splitting](#optimizing-bundle-size-with-code-splitting)
+13. [Don't Optimize Prematurely!](#dont-optimize-prematurely)
+14. [useEffect Rules and Best Practices](#useeffect-rules-and-best-practices)
 
 ---
 
@@ -566,48 +569,314 @@ These were just a few general guidelines that I hope will become useful for you 
 
 ## `Back to The WorldWise App`
 
-It's time to shortly go back to the world wise application in order to see whether there are any performance issues and whether there is anything that we need to optimize in terms of wasted renders. So here we are back in the world wise application and in case you had closed your editor before, just make sure that you start both the fake API server and the application again. Alright. And then let's come here to our application. Let's just make sure to reload.
+It's time to shortly go back to the world wise application in order to see whether there are any performance issues and whether there is anything that we need to optimize in terms of wasted renders.
 
-And so now I want to use the profiler here as well. So just like we did previously in that other application. And let's actually make this window a bit bigger so that we can see exactly what's gonna happen here. So what I want to do for now is just record walking through the entire application to check if there are any performance bottlenecks. So to see if there is any component that might perform really badly.
+And so now I want to use the profiler here as well. So just like we did previously in that other application. And let's actually make this window a bit bigger so that we can see exactly what's gonna happen. So what I want to do for now is just record walking through the entire application to check if there are any performance bottlenecks. So to see if there is any component that might perform really badly.
 
-So let's start profiling and then let's just follow the flow of the application. So we can go to all of these different components or pages and then of course we can log in. We can click somewhere here, go back, click on a city, maybe on the countries, maybe here, and then log out. So just experimenting everything and then let's finish. And you see that we have a lot of renders.
+So let's start profiling and then let's just follow the flow of the application. So we can go to all of these different components or pages.
 
-So we created 21 renders in total. And so let's now see if any of them was really slow. So in order to identify some really bad performing components, it's best to come here to the ranked tab. And so we see that the component that took the most time in the first render was this routes. So that took like less than 1 milliseconds which is really nothing.
+So we created 21 renders in total. And so let's now see if any of them was really slow. So in order to identify some really bad performing components, it's best to come here to the ranked tab.
 
-So remember that in the previous app when we were experimenting with the archive, we sometimes had like 200 milliseconds or 100 milliseconds. And of course these values are different on your computer than they are on mine, different but still. This is like an order of magnitude faster than what we had before. So nothing to worry here and so let's keep going. So we just click here and then we see all the components that rendered and how fast.
+So it seems like in this application we have absolutely no problem with performance, which of course is very nice to see.
 
-So let's just quickly go through them just to identify if anything was like really slow. So the most that we saw up until this point, it's this one, 2 milliseconds which again is really nothing. So it seems like in this application we have absolutely no problem with performance, which of course is very nice to see. So let's just clean this and maybe let's just analyze one state transition here. So maybe here with this login part just to see a bit what actually happens.
+Okay. Now let's go back to our code to see what we can do. And actually not a lot because everything is working really fluidly. So earlier we were optimizing our context but here there's not much to do.
 
-So just that navigation was actually for state updates. So here in the flame graph, we can see that first the auth provider was re rendered which then made the login form and all its children re rendered. Then next up we saw that our router basically rerendered. So in order to move us to the next page, so that's all of this stuff right here. And of course to start seeing that once we add all of these components to our tree, it becomes all a bit more confusing.
+There's not really a need to memoize this value from the CitiesContext because we don't have any component above this provider in the component tree that might re render this one. And so I think that there's actually nothing to do in CitiesContext.
 
-Alright. Now what do we have here? This is probably coming from the react leaflet library. So it's inside the map and then here we have some components that are updating inside there. And so, yeah, these are related to positioning the map probably.
+Now let's just remember that there was some issue earlier. And so we are now actually ready to fix that. So if we come back to our City.jsx, remember that in the useEffect we left out the getCity function. *So here we see that issue where ESLint is telling us to add the get city. But remember that this created like an infinite loop of HTTP requests to our API.* But let's put getCity in dependency array.
 
-And then finally we have another render which was caused by our router. So that's what we can see here on the side. So as we go through here we can always see what caused this update. So here it was again the router and here it was the auth provider. So because we locked the user in then the auth provider re rendered which then triggered all of this.
+```jsx
+useEffect(
+  function () {
+    getCity(id);
+  },
+  [id, getCity]
+);
+```
 
-Okay. And of course you can now analyze this a lot more if you feel like and if you want to have some fun with this tool. But for now let's go back here to our code to see what we can do. And actually not a lot as I was saying because everything is working really fluidly. So earlier we were optimizing our context but even here there's not much to do.
+Let's just reload the page and come actually to the network tab, clean all of this, and then watch what happens when I click on one of these cities. And indeed, immediately we get like a 1,000 requests and it keeps going even though the number here is not going up. Now we can even see the same in the profiler. So if we go back and then start profiling, clicking on any city, and then I will just leave it for a few seconds, That should be enough. And you see that we have 60 state updates only in this, like, 3 seconds that I waited.
 
-Let's just delete this use state that we no longer need. But yeah, so again there is not a lot to optimize here in this context. So that's because we don't have any performance issues and also because the way that we set up our context value. So remember how earlier we decided that we want to pass in all of these functions into the context value. And so therefore it wouldn't be practical to create one separate context for each of them, right?
+**And so clearly, there is something wrong here. And this is the only thing that we need to fix now using the tools that we learned before.**
 
-So that's one of the strategies that I mentioned earlier but that's not really practical and also not necessary here. Also, there's not really a need to memoize this value right here because we don't have any component above this provider in the component tree that might re render this one. And so there's no point in doing that And so I think that there's actually nothing to do here which is good. Now let's just remember that there was some issue earlier. And so we are now actually ready to fix that.
+But first of all, of course, we need to understand what is actually happening. So now that we have getCity function in our dependency array, the effect will re-run each time that the getCity function gets updated or in other words that it gets recreated.
 
-So if we come back here to our city remember that in the useEffect we left out the get city function. So here we see that issue where ESLint is telling us to add the get city. But remember that this created like an infinite loop of HTTP requests to our API. But let's do that again now. So, get city then let's just reload here and maybe let's come actually to the network tab, clean all of this, and then watch what happens when I click on one of these cities.
+**Now when does this function get recreated?**
 
-And indeed, immediately we get like a 1,000 requests and it keeps going even though the number here is not going up, but we can also see down here that every second or so there is a new request coming in. And even here, it's of course also very visible. Now we can even see the same in the profiler. So if we go back and then start profiling, clicking here, and then I will just leave it for a few seconds, That should be enough. And you see that we have 60 state updates only in this, like, 3 seconds that I waited.
+Well, since it lives in the context. So it is created in this citesProvider. But the problem is that this getCity function will update the state each time that it is executed, which will then end up in an infinite loop. So in useEffect we call the getCity function. And so that function will then update the state in CitiesContext component. Then this component will re render which will recreate getCity function. And as the function gets recreated since it is in the dependency array then getCity will get called again which then again will update the state which will re render which will cause the effect to run over and over and over again.
 
-And so clearly, there is something wrong here. And this is the only thing that we need to fix now using the tools that we learned before. But first of all, of course, we need to understand what is actually happening. So now that we have this get city function in our dependency array, the effect will rerun each time that the get city function gets updated or in other words that it gets recreated. Now when does this function get recreated?
+**How do you think we can fix this?** **So the solution is not to remove getCity function from the dependency array because that is not allowed in React. Instead what we need to do is to make this function stable.** So we need it to not be recreated on each re render. And the way we do that as you hopefully know is by using the `useCallback` hook.
 
-Well, since it lives in the context So let's open that. So this file, get city, lives here. So it is created in this city's provider. But the problem is that this get city function will update the state each time that it is executed, which will then end up in an infinite loop. So here we call the get city function, right?
+So let's create a new variable which will be the new getCity function and this will then be the result of calling use callback. Then our dependency array which will need probably this currentCity.id.
 
-And so that function will then update the state in this component. Then this component will re render which will then recreate this function. And as the function gets recreated since it is here in the dependency array then get city will get called again which then again will update the state which will re render which will cause the effect to run over and over and over again. So that's the infinite loop that we have right here and probably we should come back here and now take our application out of this misery. So it's been fetching like for a few minutes now, so that's a bit too much.
+```jsx
+const getCity = useCallback(
+  async function getCity(id) {
+    if (Number(id) === currentCity.id) return;
 
-But anyway, how do you think we can fix this? So the solution is not to remove this from the dependency array because that is not allowed in React. Instead what we need to do is to make this function stable. So we need it to not be recreated on each re render. And the way we do that as you hopefully know is by using the useCallback hook.
+    dispatch({ type: "loading" });
+    try {
+      const res = await fetch(`${BASE_URL}/cities/${id}`);
+      const data = await res.json();
+      dispatch({ type: "city/loaded", payload: data });
+    } catch (err) {
+      dispatch({
+        type: "rejected",
+        payload: "There was an error loading the city...",
+      });
+    }
+  },
+  [currentCity.id]
+);
+```
 
-So let's create a new variable which will be the new get city function and this will then be the result of calling use callback. Alright. Then our dependency array which will need probably this current city and there it is. So current city dot ID and once again just having this kind of warning here is reason enough to really always install ESLint in your projects. So without it you will create so many bugs.
+*Just having this kind of warning is reason enough to really always install ESLint in your projects. So without it you will create so many bugs.*
 
-It's it's not gonna be funny really. But anyway, this now shows you a real world use case of this hook. So of this use callback hook right here. So this is one of these real world situations in which you will really need to reach for this tool. So that's why it's really important that you paid good attention throughout this section.
+So this is one of these real world situations in which we will really need to reach for this tool(useCallback, useMemo etc). So that's why it's really important that you paid good attention throughout this section.
 
-And actually remember that when I first introduced these hooks this was exactly one of the 3 use cases that I talked about. So memoizing values that are used in the dependency array of another hook in order to prevent infinite loops. So let's give it a reload here, and then let's just try it again. And if we come here to our network tab then we see that there is no problem anymore. And also here we are not seeing these infinite requests coming in.
+And actually remember that when I first introduced these hooks this was exactly one of the 3 use cases that I talked about. **So memoizing values that are used in the dependency array of another hook in order to prevent infinite loops.**
 
-Alright. And this is actually all that I wanted to show you in this lecture. And I can understand that it probably seems pretty intimidating for example to find out by yourself that this would have been the solution here. But trust me that with practice and with study you will be able to really understand and to master all these tools.
+---
+
+## `Optimizing Bundle Size With Code Splitting`
+
+So we've talked a lot about optimizing wasted renders and overall app performance. However, probably the most important thing that we can and **should optimize is the bundle size**.
+
+And so let's now learn how to do that. But before we go check out the code, we first need to understand what that bundle actually is. And let's start at the very beginning.
+  
+So whenever some user navigates to our application, they are basically visiting a website that is hosted on some server. So that's just how every single website and web application work. Now once the user actually navigates to the app, the server will send back a huge JavaScript file to the client that is requesting it. And this file is the bundle.
+
+**So the bundle is simply a JavaScript file that contains the entire code of the application. And it is called a bundle because a tool like Vite or Webpack has bundled all our development files into one huge bundle, which contains all the application code.** This means that once the code has been downloaded, the entire react application is loaded at once, which essentially turns it into a single page application that is running entirely on the client. So whenever the URL changes in the app, the client just renders a new react component, but without loading any new files from the server because all the JavaScript code is already there in the bundle. **The bundle size is the amount of JavaScript code that every single user needs to download in order to start using the application.**  
+So if the bundle has, for example, 500 kilobytes then all those bytes need to be downloaded before the app even starts working. And of course, the bigger the bundle, the longer it's gonna take to download, which can become a huge problem. Therefore, bundle size is probably the most important thing that we need to optimize. And thankfully for us and for our users, it's not very hard to do. **So we can just use a technique called `code splitting`.**
+
+![!Bundle-And-Code-Splitting](ss/bundle-and-code-splitting.jpeg)
+  
+**`Code splitting` basically takes the bundle and splits it into multiple parts. So instead of just having one huge JavaScript file, we will have multiple smaller files which can then be downloaded over time as they become necessary for the application. And this process of loading code sequentially is called `lazy loading`.** And this really is one of the biggest performance gains that you can achieve for your users. And so let me now show you how it's done in practice.
+
+Now there are many ways in which we can split the bundle. So in which we can lazily load our components.  
+**The most common one is to split the bundle at the route level or in other words at the page level. So basically what we're gonna do is to take all the components that represent a page and load each of them separately.**
+
+That's what most applications do, but of course we don't have to do it this way because this feature has really nothing to do with react router. So any component can be lazy loaded in the way that I'm gonna show you.  
+So let's actually do that. And so let's first identify our pages. So it's the `homepage`, the `product`, the `pricing`, the `login`, then here the `application` itself which is an app layout, and finally page `not found`. So those are our 6 pages in our App.jsx.  
+
+And so let's comment out all the import statement and we will now lazy load these. **So instead of writing import let's now write just the name of the component, for example, homepage, and then we use React's lazy function.**
+
+```jsx
+import { lazy } from "react";
+
+// import Product from "./pages/Product";
+// import Pricing from "./pages/Pricing";
+// import Homepage from "./pages/Homepage";
+// import Login from "./pages/Login";
+// import AppLayout from "./pages/AppLayout";
+// import PageNotFound from "./pages/PageNotFound";
+
+const Homepage = lazy();
+```
+
+So this lazy function here is actually a feature that is built into React and then Vite or Webpack, they will automatically split the bundle when they see this lazy function.
+
+Now actually thinking of these bundlers I had the idea that I should even show you how the bundle looks like right now before we do lazy loading.
+
+Just run the following command in terminal
+
+```bash
+npm run build
+
+
+# Now the size of bundled files
+dist/assets/index-80383d0a.css   29.96 kB │ gzip:   5.07 kB
+dist/assets/index-f4b8bec1.js   509.64 kB │ gzip: 148.79 kB
+```
+
+Let's actually implement the lazy loading. And so in lazy function we now need a callback function which will then call the dynamic import function, which is actually part of JavaScript. And so there we then need the path to the component itself.
+
+```jsx
+const Homepage = lazy(() => import("./pages/Homepage"));
+const Product = lazy(() => import("./pages/Product"));
+const Pricing = lazy(() => import("./pages/Pricing"));
+const Login = lazy(() => import("./pages/Login"));
+const AppLayout = lazy(() => import("./pages/AppLayout"));
+const PageNotFound = lazy(() => import("./pages/PageNotFound"));
+```
+
+That should be it. Let's reload this at the root. And for now everything is working fine.
+
+**But this is actually not yet the end of the story. So this is only the first part, but now we also want to display a `loading spinner` while we go from one page to the other one.** So basically while these pages are gonna be loaded in the background.
+
+**This is now where the React `suspense API` comes into play for the first time.**  
+**`Suspense` is a concurrent feature that is part of modern React and that allows certain components to suspend, which basically means that it allows them to wait for something to happen.** And in our case, these lazy components are gonna be suspended while they're loading. **And so we can then use the built in suspense component to show a fallback,** which in our case is gonna be that loading indicator that I just mentioned.
+
+So let's come into our tree in App.jsx and above the **`Routes`** let's then include **`Suspense`**. So making sure that component has been included from React and then here is where we specify the fallback prop.  
+
+```jsx
+import { lazy, Suspense } from "react";
+import SpinnerFullPage from "./components/SpinnerFullPage";
+
+<Suspense fallback={<SpinnerFullPage />}>
+  <Routes>
+
+  </Routes>
+</Suspense>
+```
+
+So here this then takes a React element which is going to be our Full page spinner component. So **SpinnerFullPage**.
+
+```jsx
+function App() {
+  return (
+    <AuthProvider>
+      <CitiesProvider>
+        <BrowserRouter>
+          <Suspense fallback={<SpinnerFullPage />}>
+            <Routes>
+              <Route index element={<Homepage />} />
+              <Route path="product" element={<Product />} />
+              <Route path="pricing" element={<Pricing />} />
+              <Route path="/login" element={<Login />} />
+              <Route
+                path="app"
+                element={
+                  <ProtectedRoute>
+                    <AppLayout />
+                  </ProtectedRoute>
+                }
+              >
+                <Route index element={<Navigate to="cities" replace />} />
+                <Route path="cities" element={<CityList />} />
+                <Route path="cities/:id" element={<City />} />
+                <Route path="countries" element={<CountryList />} />
+                <Route path="form" element={<Form />} />
+              </Route>
+              <Route path="*" element={<PageNotFound />} />
+            </Routes>
+          </Suspense>
+        </BrowserRouter>
+      </CitiesProvider>
+    </AuthProvider>
+  );
+}
+```
+
+And with this we should be good to go.
+
+### `Short Recap`
+
+With lazy loading we will now load each of the components as we need them, which will basically automatically split our bundle into separate chunks. And it is Vite in our case here that's gonna take care of that. And so then, of course there will be a time while we navigate from one page to the other where that chunk has not been downloaded yet. So for example if we go to login then that page has not been downloaded. **And so then this entire thing, so this lazy functionality is powered by the suspense API.** And so that will make the component basically suspended in the meantime, which will then display the loading spinner. And then once that has arrived, it will no longer be suspended and then the content, so the **children of the suspense** is gonna be displayed. So it's gonna be rendered. So let's see if that works, and let's actually do some throttling here like a slow 3g so that we can actually see this happening.
+
+So our app layout which is the main part of the app and so that's why that takes a bit longer. Okay. Great. And of course, now if we go back, so the second time everything is gonna work really fluidly. Beautiful.
+
+So this really is the most important feature I would say that we should always implement in any React application that we're building.
+
+And now to finish, let's just see the actual chunks that Vite has created for us. So npm run build. So these chunks here are not gonna be exactly the same ones as in development because in development everything is a bit different. So this year is already optimized for production and so we see that it all is very different.
+
+```bash
+dist/assets/Logo-515b84ce.css             0.03 kB │ gzip:   0.05 kB
+dist/assets/Login-f39ef3ff.css            0.35 kB │ gzip:   0.22 kB
+dist/assets/Product-cf1be470.css          0.47 kB │ gzip:   0.27 kB
+dist/assets/PageNav-d3c5d403.css          0.51 kB │ gzip:   0.28 kB
+dist/assets/Homepage-380f4eeb.css         0.51 kB │ gzip:   0.30 kB
+dist/assets/AppLayout-c49eff02.css        1.91 kB │ gzip:   0.70 kB
+dist/assets/index-bc46b829.css           26.29 kB │ gzip:   4.39 kB
+dist/assets/Product.module-02d70b80.js    0.06 kB │ gzip:   0.07 kB
+dist/assets/PageNotFound-76345d1b.js      0.15 kB │ gzip:   0.15 kB
+dist/assets/Logo-3d9995eb.js              0.21 kB │ gzip:   0.19 kB
+dist/assets/PageNav-21d573e9.js           0.54 kB │ gzip:   0.28 kB
+dist/assets/Pricing-1a60ac6e.js           0.65 kB │ gzip:   0.41 kB
+dist/assets/Homepage-023b2e86.js          0.67 kB │ gzip:   0.41 kB
+dist/assets/Product-bad98dc9.js           0.86 kB │ gzip:   0.49 kB
+dist/assets/Login-3e5f39d4.js             1.04 kB │ gzip:   0.55 kB
+dist/assets/AppLayout-654539fc.js         7.27 kB │ gzip:   2.83 kB
+dist/assets/leaflet-src-3b9745fd.js     149.57 kB │ gzip:  43.34 kB
+dist/assets/index-35f22fc7.js           351.12 kB │ gzip: 102.05 kB
+```
+
+So we have lots of different chunks now here which are then all lazy loaded. So you see that we still have a huge one right at the end. Alright. So we could now try to lazy load some other components.
+
+So remember that it doesn't only work with routes, but I think that this is good enough. So for example the AppLayout itself was apparently 156 kilobytes. And so it's really nice that we got that out of the main bundle. And notice how even the CSS is also split into multiple parts. Alright.
+
+**So really nice feature and, yeah, again powered by both the bundler, so Vite or Webpack and the lazy function provided by React plus the import function provided by JavaScript and then also the suspense component.**  
+
+And with this, we have now actually finally really completed this world wise application. So this was the last video in which we worked on this project. And so once again, congratulations for finishing this big project where we learned so many new things and covered so much ground.
+
+---
+
+**`30/10/2024`**  
+**`Yougo House Rawalpindi`**
+
+---
+
+## `Don't Optimize Prematurely!`
+
+Let's wrap up the performance optimization part of this section with a quick list of do's and don'ts. So the main message of this lecture is that you should not optimize prematurely. And what do I mean by that? Well, basically **don't optimize anything if there is nothing to optimize**. So if your app is performing just fine, then don't just wrap all your components into a memo or all your values and callbacks into useMemo and useCallback.  
+Also, there's no need to optimize context if it's not slow and if it doesn't have many consumers. So doing all these things can actually do more harm than good because memoization itself can have a slight hit on performance. And so if you have a 1,000 useless useMemos, it can actually all add up and then even worse than the performance of your application.
+
+Instead, what you should do is to find actual performance bottlenecks using the profiler tool that we learned about in the section or even better identify problems visually. For example, when you see a laggy and sluggish UI because then you can focus on those real performance issues and fix them. For example, by memoizing expensive re renders or expensive calculations. Now when it comes to the context API, it only makes sense to optimize re renders if a certain context has lots of consumers and if the state updates all the time causing a significant issue. So in that case, you can try to memoize the context value, memoize all the direct child components of the provider or set up two separate contexts.  
+So one for the actual state value and one for updating the state.
+
+Finally, it's also super important to always implement code splitting and lazy loading for all the routes in your single page applications. Alright. And with that, you're well on your way to mastering performance optimization in React. It can be a pretty confusing subject, but also a very important one.
+
+[!Do not optimize prematurely](ss/do-and-dont-in-code-optimization.jpeg)
+
+And so it's great to see that you're still here with me.
+
+---
+
+## `useEffect Rules and Best Practices`
+
+So we have talked about and used the useEffect hook a lot throughout the course. Now useEffect is probably the most confusing part of React for beginners, which is why I decided that I still need to clarify some more things in the second part of the section and in this lecture.
+
+### `Rules and guidelines for specifying a correct dependency array`
+
+- **Every single state variable and prop that's being used in the effect must be included in the dependency array.**
+
+    However, **this rule is not 100% complete because of two things.**
+    1. **Any context value that the component is subscribed to must also be included in the dependency array.**
+    2. And second, actually **we must include all so called reactive values in the dependency array as well.** What is a reactive value? Well, **a reactive value is any value that is either state, a prop, a context value or any other value that itself references one of the reactive values.**  
+    `So basically, all values that are somehow connected to state, props or context are reactive values.` Now going back to our dependency array, this means that every single reactive value must be included, which again includes any functions or variables that reference any other reactive value.  
+    **And the goal of this is to avoid so called stale closures that would otherwise occur inside the effect function.** Now these two rules that we just learned about are pretty strict and tell us exactly what must be included in the dependency array.
+
+    And so this means that basically the dependencies choose themselves, right? Because if we need to include all reactive values in the list, there's not much to think about. Therefore, you should never ever ignore that ESLint rule that we've seen time and time again warning us about missing dependencies and ensuring that our dependency arrays are correct at all times. But of course, you want to understand why you're missing the dependencies that the linter is telling you about and not just blindly follow the tool. And so that's what this lecture is for.
+
+    Also, sometimes you might be in an environment where the linter is not available and so then you really need to know what you're doing.
+
+- The final rule is that you **should not use objects or arrays as dependencies** **because when you do so it seems to work just fine but in reality the effect will rerun on every single render.** The reason for that is that React checks if dependencies have changed between renders by simply comparing them using the triple equality operator. However, as we already know and already talked about in this section, **objects in JavaScript will have a different reference each time that they are recreated.**  
+And therefore, even if the content of an object stays the same after a render, React will still see the old and the new object as different and will therefore rerun the effect.
+
+[!useEffect Dependency Array Rules](ss/useEffect-dependency-array-rules.jpeg)
+
+Now if you really do need an object as a dependency, I have some solutions in the next slide. But before we go there, **it's important to note that all these rules that we just talked about work in the exact same way for the other hooks that also have dependency arrays. So useMemo and useCallback.**
+
+Okay, So as we just learned, we must include all reactive values in the list of dependencies. React calls this not lying about dependencies. **However, in certain situations, including every single dependency in the array can actually cause the effect to run way too often and introduce problems.**  
+
+**The solution is not to omit one or more dependencies because that would be lying to react. Instead, we can use one of the strategies that can make some of the dependencies unnecessary. And so then we can remove those unnecessary dependencies from the array.**
+
+So first off, **when you're dealing with helper functions as dependencies, the easiest way to remove the dependency is to just move the function right into the effect.** Because if the function is inside the effect then it's no longer a dependency of the effect.  
+**However, if you can't do that because you might need the same function in multiple places, you can try to memoize it with useCallback.** **Also if the function is not a reactive value itself, so if it doesn't use any reactive values inside the code then you can just move it entirely out of the component** **because it's not really a dependency anyway.** And so by doing this, the function then doesn't need to be recreated on every render.
+
+Next up, **if you want to use an object as a dependency, you can try to not include the entire object but only the properties that you actually need inside the effect.** **And you can do this as long as these properties are primitive values like strings or numbers.** However, if for some reason that doesn't work for your specific situation, you can try one of the strategies that I mentioned for functions as they are quite similar.
+
+**And finally, we have two other strategies.**
+`FIRST:` If you find yourself in a situation where your dependency list includes multiple reactive values that are related to one another, you can try using a reducer with useReducer. So sometimes a reducer can really be like a secret weapon that makes all your dependency problems completely go away.  
+
+`SECOND:` **Also, there is no need to include the set state function from use state or the dispatch function from use reducer in the dependency list because react guarantees that these are stable between renders.**
+
+![Removing Unnecessary dependencies](ss/removing-undecessary-dependencies.jpeg)
+
+**And now to really wrap up this part about useEffect, let me give you a maybe shocking reality about effects,** **which is that effects should actually only be used as a last resort when no other solution really makes sense.** **That's the reason why react calls effects an escape hatch to step outside of react.**
+
+Now, I'm telling you this because when hooks were first introduced into react, the useEffect hook was being overused a lot and also used in the wrong places.
+
+Now, I'm not really gonna go deep into this right now, but here are just the **three biggest use cases where effects are still being overused** and that you should avoid as a beginner.
+
+1. The first one is to **use an effect to respond to a user event like a click or a keystroke.** So as we learned before, a user event should, whenever possible, be handled with an event handler function and not with an effect, even if the handler does create a side effect.
+
+2. Next, **fetching data from an API when the component first mounts is another overused application of useEffect.** Now, we did do this all the time in this course, but that's because we were still learning and building really small applications.  
+And in fact, in smaller apps this is completely fine. But in a more real world application, it's best to use a professional data fetching library like `react query`.
+
+3. And finally, **effects are overused a lot to synchronize state changes with one another,** which means to use useEffect to listen for a state change only to set another piece of state. **And the problem with this is that it will create multiple re renders which can be problematic.** Now, actually we are gonna do just this in the current project but in our case it's just gonna be because it will highly simplify the code as you will see.
+
+[!When not to use an Effect](ss/when-not-to-use-an-effect.jpeg)
+
+So basically, all these suggestions need to be taken with a grain of salt as always. So really, in fact, everything is acceptable in certain situations and in certain doses. But generally speaking, instead of using an effect to set state based on another state, you should rely on the arrived state and event handlers.
 
 ---
