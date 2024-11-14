@@ -16,6 +16,7 @@
 12. [Optimizing Bundle Size With Code Splitting](#optimizing-bundle-size-with-code-splitting)
 13. [Don't Optimize Prematurely!](#dont-optimize-prematurely)
 14. [useEffect Rules and Best Practices](#useeffect-rules-and-best-practices)
+15. [CHALLENGE-1 Fix Performance Issues in Workout Timer](#challenge-1-fix-performance-issues-in-workout-timer)
 
 ---
 
@@ -648,7 +649,7 @@ So whenever some user navigates to our application, they are basically visiting 
 **So the bundle is simply a JavaScript file that contains the entire code of the application. And it is called a bundle because a tool like Vite or Webpack has bundled all our development files into one huge bundle, which contains all the application code.** This means that once the code has been downloaded, the entire react application is loaded at once, which essentially turns it into a single page application that is running entirely on the client. So whenever the URL changes in the app, the client just renders a new react component, but without loading any new files from the server because all the JavaScript code is already there in the bundle. **The bundle size is the amount of JavaScript code that every single user needs to download in order to start using the application.**  
 So if the bundle has, for example, 500 kilobytes then all those bytes need to be downloaded before the app even starts working. And of course, the bigger the bundle, the longer it's gonna take to download, which can become a huge problem. Therefore, bundle size is probably the most important thing that we need to optimize. And thankfully for us and for our users, it's not very hard to do. **So we can just use a technique called `code splitting`.**
 
-![!Bundle-And-Code-Splitting](ss/bundle-and-code-splitting.jpeg)
+![Bundle-And-Code-Splitting](ss/bundle-and-code-splitting.jpeg)
   
 **`Code splitting` basically takes the bundle and splits it into multiple parts. So instead of just having one huge JavaScript file, we will have multiple smaller files which can then be downloaded over time as they become necessary for the application. And this process of loading code sequentially is called `lazy loading`.** And this really is one of the biggest performance gains that you can achieve for your users. And so let me now show you how it's done in practice.
 
@@ -815,7 +816,7 @@ So one for the actual state value and one for updating the state.
 
 Finally, it's also super important to always implement code splitting and lazy loading for all the routes in your single page applications. Alright. And with that, you're well on your way to mastering performance optimization in React. It can be a pretty confusing subject, but also a very important one.
 
-[!Do not optimize prematurely](ss/do-and-dont-in-code-optimization.jpeg)
+![Do not optimize prematurely](ss/do-and-dont-in-code-optimization.jpeg)
 
 And so it's great to see that you're still here with me.
 
@@ -842,7 +843,7 @@ So we have talked about and used the useEffect hook a lot throughout the course.
 - The final rule is that you **should not use objects or arrays as dependencies** **because when you do so it seems to work just fine but in reality the effect will rerun on every single render.** The reason for that is that React checks if dependencies have changed between renders by simply comparing them using the triple equality operator. However, as we already know and already talked about in this section, **objects in JavaScript will have a different reference each time that they are recreated.**  
 And therefore, even if the content of an object stays the same after a render, React will still see the old and the new object as different and will therefore rerun the effect.
 
-[!useEffect Dependency Array Rules](ss/useEffect-dependency-array-rules.jpeg)
+![useEffect Dependency Array Rules](ss/useEffect-dependency-array-rules.jpeg)
 
 Now if you really do need an object as a dependency, I have some solutions in the next slide. But before we go there, **it's important to note that all these rules that we just talked about work in the exact same way for the other hooks that also have dependency arrays. So useMemo and useCallback.**
 
@@ -875,8 +876,14 @@ And in fact, in smaller apps this is completely fine. But in a more real world a
 
 3. And finally, **effects are overused a lot to synchronize state changes with one another,** which means to use useEffect to listen for a state change only to set another piece of state. **And the problem with this is that it will create multiple re renders which can be problematic.** Now, actually we are gonna do just this in the current project but in our case it's just gonna be because it will highly simplify the code as you will see.
 
-[!When not to use an Effect](ss/when-not-to-use-an-effect.jpeg)
+![When not to use an Effect](ss/when-not-to-use-an-effect.jpeg)
 
 So basically, all these suggestions need to be taken with a grain of salt as always. So really, in fact, everything is acceptable in certain situations and in certain doses. But generally speaking, instead of using an effect to set state based on another state, you should rely on the arrived state and event handlers.
+
+---
+
+## `CHALLENGE-1 Fix Performance Issues in Workout Timer`
+
+In this lecture, we're going to quickly set up yet another small project just to demonstrate some of the things that we just talked about useEffect. And in our starter files, we actually have again the complete project already. So come here to this folder, `workout Timer`, and then here the starter already contains the entire code.
 
 ---
