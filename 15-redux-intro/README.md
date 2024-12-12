@@ -14,6 +14,13 @@
 10. [The Legacy Way of Connecting Components to Redux](#the-legacy-way-of-connecting-components-to-redux)
 11. [Redux Middleware and Thunks](#redux-middleware-and-thunks)
 12. [Making an API Call With Redux Thunks](#making-an-api-call-with-redux-thunks)
+13. [The Redux DevTools](#the-redux-devtools)
+14. [What is Redux Toolkit (RTK)](#what-is-redux-toolkit-rtk)
+15. [Creating the Store With RTK](#creating-the-store-with-rtk)
+16. [Creating the Account Slice](#creating-the-account-slice)
+17. [Back to Thunks](#back-to-thunks)
+18. [Creating the Customer Slice](#creating-the-customer-slice)
+19. [Redux vs Context API](#redux-vs-context-api)
 
 ---
 
@@ -1574,68 +1581,1018 @@ But this is, of course, a lot easier to understand in practice. And so let's imp
 
 ## `Making an API Call With Redux Thunks`
 
-Let's now use Redux Phunks to implement the feature where the user can deposit money into the account in a foreign currency, which will then be converted by calling an external API. So basically, whenever the user deposits some money here, they can select which currency that money is. So for example, euro. And so if that currency is different from US dollar, then we need to convert these €500 back to US dollars before they actually get deposited into the account. So before that deposit action is actually dispatched to the store.
+Let's now use **Redux Thunks** to implement the feature where the user can deposit money into the account in a foreign currency, which will then be converted by calling an external API.  
+So basically, whenever the user deposits some money, they can select which currency that money is. So for example, euro. And so if that currency is different from US dollar, then we need to convert these €500 back to US dollars before they actually get deposited into the account. So before that deposit action is actually dispatched to the store.
 
-And so that's where now the Redux funk comes into play. So we will have that middleware sitting between dispatching the action as we click here on the button and that action actually reaching the store. Okay. So in order to use this middleware we need to follow 3 steps. 1st, we install the middleware package then we apply that middleware to our store and finally we use the middleware in our action creator functions.
+And so that's where now the Redux thunk comes into play. So we will have that middleware sitting between dispatching the action as we click on the `DEPOSIT` button and that action actually reaching the store. Okay.
 
-So let's now do them 1 by 1. So down here, let's say npm install reductashthunk. Okay. And so then we can import the func function basically from redux thunk that we just installed. Not think, of course.
+**So in order to use this middleware we need to follow 3 steps.**
 
-And here. Okay. So we installed and brought that func in. And so now we need to apply that to our store. So here in the create store function we can pass in another argument and now here we need to call the apply middleware function.
+1. **Install the middleware package**
+2. Then we **apply that middleware to our store**
+3. Finally we **use the middleware in our action creator functions**.
 
-So apply middleware which is also provided by Redux itself. So see how that got imported here. And now into this apply middleware function, we pass in our middleware. And so that is the thunk. And so with this, we basically told Redux or we told our store that we want to use the thunk middleware in our application.
+So let's now do them 1 by 1.
 
-And so let's now go to the action creator that is actually responsible for depositing money in the account. Now here we lost our account. So there we go. But as I was saying now let's come into the account slice and in particular here into this deposit action creator. So here besides accepting the amount we now also will need to accept the currency.
+*`npm install redux-thunk`*.  
+And so then we can import the thunk function basically from redux thunk that we just installed.  
 
-So as we dispatch the action of deposit we will not only pass in the amount but also the currency. And so let's actually immediately do that. So right here, so handle deposit, this is where we dispatch this action. So where we call this action creator. And so here now we also need the currency.
+```js
+// npm install redux-thunk
 
-And then let's also clear the currency since we're already here. And so that's it for now. So again, now our action creator receives not only the amount that should be deposited but also the currency that that amount is in. Now, first of all, if that currency is already US dollars, so if that's USD and these values, they come right here from these option values. So we have USD for US dollars, we have Euro, and we have British pounds.
+import thunk from "redux-thunk";
+```
 
-So these can be the 3 currencies. So again, if the currency already is US dollars then there's nothing to convert. And so then we can simply return the object, so this action just like before. So in this case nothing is going to change. But if the currency is different then this is where we will need to make that API call.
+We installed and brought that func in. And so now we need to **apply that to our store**. So in the **createStore** function we can pass in another argument and now here we need to call the applyMiddleware function.
 
-And so for that we need the thunk. Now this middleware is in our code actually nothing special. So the only thing that changes is that here in this action creator we will not return the action immediately but instead return a function. So we can now return a function like this. And so then here when we dispatch right here and then call the deposit action creator instead of ending up with the event object right here we will end up with a function.
+So **applyMiddleware**, which is also provided by Redux itself. And now into this **applyMiddleware** function, we pass in our middleware. And so that is the **thunk**.
 
-So basically we will dispatch a function. And so when Redux sees that it will know that that function is the func. And so it will then execute that function and not immediately dispatch the action to the store. Alright? So again, if we return a function here then Redux knows that this is the asynchronous action that we want to execute before dispatching anything to the store.
+```jsx
+const store = createStore(rootReducer, applyMiddleware(thunk));
+```
 
-Now in order to then later actually dispatch this function here that Redux will call internally will get access to the dispatch function and to the current state. So by calling the get state function. Alright. And so then here we can do our API call and then once we are finished with that we can then finally in the end return the action. So this is where we will return the action in the end.
+And so with this, we basically told Redux or we told our store, that we want to use the thunk middleware in our application.
 
-All right. And so let's do that API call here. We already used this API before so let's just grab the URL here from the Frank Fueter, and here it already is. So like this, and then you can just click here on documentation. And then all the way in the end, we have this URL right here from which we are going to fetch.
+And so let's now go to the action creator that is actually responsible for depositing money in the account. So let's come into the **accountSlice** and in particular into the **deposit** action creator. So here besides accepting the amount we now also will need to accept the currency.
 
-So just copy that. And then here, let's do the fetch request. And now here we don't have the host, so let's just grab this part here as well and place that here. Alright. Now here we of course now need to replace these values.
+So as we dispatch the action of deposit we will not only pass in the amount but also the currency. And so let's actually immediately do that.
 
-So the amount is the amount that we actually get. So amount and then from is this currency that we receive and the to currency is US dollars. Now, of course, we could also have defined the target currency in the state, for example. So we could create also here the currency that the account is in. And so then here we would have to check that, but let's once again just keep it simple here.
+```js
+function handleDeposit() {
+if (!depositAmount) return;
 
-Alright. Not sure why I have 2 fetches here. But anyway we will want to await this and then store the result into the res variable. And so then we make this an async function. Okay.
+dispatch(deposit(depositAmount, currency));
+setDepositAmount("");
+setCurrency("");
+}
+```
 
-Then as always we need to await the conversion to JSON and then let's take a look at the data first. And so this should at this point already be working. So let's test this. This is not really important here and so let's deposit 100 and let's say that we are depositing €100. So let's click here and so indeed our function here was now called and it logged to the console these results.
+Now our action creator receives not only the amount that should be deposited but also the currency that that amount is in. Now, first of all, if that currency is already US dollars. So we have USD for US dollars, we have Euro, and we have British pounds, that we accepting from form.
 
-So we are interested in here is these rates and then dotusd. So let's just store that as well. So so converted is data.rates.usd. Alright. And so now we have the value that we actually want to dispatch to the store.
+```jsx
+export function deposit(amount, currency) {
+  if (currency == "USD") return { type: "account/deposit", payload: amount };
+}
+```
 
-And so now we will return our action. So basically exactly what we had here before. So the action type is the same and the payload will now no longer be the amount but the converted amount. And so with this we did now in fact delay the creation of the action to the future. So basically to the point after this fetch request here has successfully retrieved the data.
+So in this case nothing is going to change. But if the currency is different then this is where we will need to make that API call.
 
-So only after all of this is done we actually dispatch. So actually it is not return here but really dispatch. So here we no longer need to return but really to dispatch. And so that is the reason why we get access to the dispatch function right here. And so now we basically have 2 dispatches.
+And so for that we need the thunk. Now this middleware(thunk) is in our code actually nothing special. So the only thing that changes is that in the action creator we will not return the action immediately but instead return a function. So we can now return a function like this.
 
-So first we dispatch here and in the case we have another currency that is not US dollars then this will return a function, right? So this function right here. And so then Redux will call this function and pass it the dispatch function so that we can then call that function in the future when we want to actually dispatch or action in the end to the store. So when we already have the result of the asynchronous operation. And so this should now actually work nicely.
+```jsx
+export function deposit(amount, currency) {
+  if (currency == "USD") return { type: "account/deposit", payload: amount };
 
-So let's then deposit €100 and beautiful. This is exactly what €100 converted to US dollars is right now. And of course, you will see a different value here, but what matters is that this worked now. And so if we think about this, then this entire code here, what is essentially our middleware, really sits between the dispatching and the store. So when we dispatch the action and the currency is different from US dollar, then that action never actually reaches the store, at least not in the beginning.
+  return function () {};
+}
+```
 
-Because instead, then this code here will be executed and only after that is finished we then dispatch a new action to our store with the new value. And so again, this really sits then in the middle. And so therefore the name middleware. And now just to finish, let's also show the user some loading indicator. So telling them that some asynchronous operation is happening.
+And so then in handleDeposit function, when we dispatch and then call the deposit action creator. instead of ending up with the event object we will end up with a function. **So basically we will dispatch a function. And so when Redux sees that it will know that that function is the thunk. And so it will then execute that function and not immediately dispatch the action to the store.**  
+Alright? So again, if we return a function then Redux knows that this is the asynchronous action that we want to execute before dispatching anything to the store.
 
-So to do that, let's create a new state here. And as always, let's call that is loading which in the beginning will of course be false. But then as soon as we start fetching, let's then actually dispatch an action that will set is loading to true. So basically, right before here. So we can do dispatch and then the type of the event, let's call it account and then converting currency.
+Now in order to then later actually dispatch this function that Redux will call internally will get access to the dispatch function and to the current state, by calling the getState function. Alright. And so then here we can do our API call and then once we are finished with that we can then finally in the end return the action. So this is where we will return the action in the end.
 
-And so you see that we really can dispatch actions as we please right here in this middleware. So we don't have to limit ourselves to only doing that here in the end. So here we will dispatch immediately to let the user know that we are doing some work and then in the end as soon as we're done with that work we dispatch the new value into the store. So then it reaches our reducer. And so now let's then implement that new action right here.
+```js
+export function deposit(amount, currency) {
+  if (currency == "USD") return { type: "account/deposit", payload: amount };
 
-So that's account slash converting currency I believe. And so here all this does is to return the current state and set is loading to true. Okay. And so now in the end do you think that in the end we should then hear dispatch another action? So 1, 2, basically set is loading back to false.
+  return function (dispatch, getState) {
 
-Well, we don't have to because that's the beauty of updating multiple states at the same time with the reducer. So all we have to do is to come here into deposit and then set the is loading to false right here. And so now all we have to do is to then get that from the state. So from here, is loading and then we can use that, right here close to the button. So, here we can use the disabled prop and set that to is loading And so then whenever this is true, we will not be able to click on that button.
+    // API call
 
-And then here inside the text, let's do some conditional rendering. So let's say if is loading, then let's say, converting and else, then here we need a template literal just like this. So let's check again with our €100 and that was really fast but I think the text changed here shortly. So let's come to a network tab and do some throttling with a slow 3 g maybe, and then let's try that again. So I always like to do that.
+    // return the action
+  };
+}
+```
 
-Well, that's still very fast. So I guess that API is a fast one, but, yeah, let's just trust that everything works this way. Okay. Now the beauty of what we just implemented here is that this component here actually has no idea that the amount is converted behind the scenes. So that conversion is completely hidden from our component and instead it is encapsulated right here in the account slice.
+And so let's do that API call. <https://frankfurter.dev/>
 
-So it's happening here in the centralized place. And if we had other API calls or other asynchronous operations in these other action creators, then of course they would also be in this file. So again, they would then all be in this one centralized place, not spread all over the application. And so with this we can keep this component here really tidy and clean. I mean it's not really that clean because we chose to have all this JSX in one file which usually we would probably split up, but you get the point.
+And then all the way in the end, we have this URL right here from which we are going to fetch.
 
-So we don't have the data fetching anymore here in the component. So I hope this wasn't all too confusing and what I mostly want you to retain is that when we are using funcs we instead of returning an action object from the action creator function we return a new function. And so then the result of this becomes a function and no longer an object. And so then Redux when it sees that we are dispatching a function it will call that function and into that function it will pass in the dispatch function and get state which we didn't even use in this case. And so then we can use that dispatch function inside here to delay that dispatching until the asynchronous operation that we want to implement has finished.
+```jsx
 
+export function deposit(amount, currency) {
+  if (currency == "USD") return { type: "account/deposit", payload: amount };
+
+  return async function (dispatch, getState) {
+    fetch(`https://api.frankfurter.app/latest?base=${currency}&symbols=USD`)
+      .then((resp) => resp.json())
+      .then((data) => {
+        // const convertedAmount = (amount * data.rates["USD"]).toFixed(2);
+        console.log(data);
+      });
+
+    // return the action
+  };
+}
+
+// LOGGED RESULTS
+{amount: 1,
+base : "GBP",
+date : "2024-11-26",
+rates: {
+  USD : 1.2604
+}}
+
+```
+
+So so converted is data.rates.usd. Alright. And so now we have the value that we actually want to dispatch to the store.
+
+And so now we will return our action. So basically exactly what we had here before. So the action-type is the same and the payload will now no longer be the amount but the converted amount. And so with this we did now in fact delay the creation of the action to the future. So basically to the point after this fetch request here has successfully retrieved the data. So only after all of this is done we actually dispatch.
+
+```jsx
+
+export function deposit(amount, currency) {
+  if (currency == "USD") return { type: "account/deposit", payload: amount };
+
+  return async function (dispatch, getState) {
+    const res = await fetch(
+      `https://api.frankfurter.app/latest?base=${currency}&symbols=USD`
+    );
+    const data = await res.json();
+
+    const converted = data.rates.USD;
+
+    dispatch({ type: "account/deposit", payload: converted });
+  };
+}
+
+```
+
+And so that is the reason why we get access to the dispatch function right in this function. And so now we basically have 2 dispatches. So first we dispatch at top of the deposit function and in the case we have another currency that is not US dollars then this will return a function. And so then Redux will call this function and pass it the dispatch function so that we can then call that function in the future when we want to actually dispatch or action in the end to the store. **So when we already have the result of the asynchronous operation. And so this should now actually work nicely.**
+
+Yeah it's working... And so if we think about this returning function⤴️, what is essentially our middleware, really sits between the dispatching and the store. So when we dispatch the action and the currency is different from US dollar, then that action never actually reaches the store, at least not in the beginning. Because instead, then this code here will be executed and only after that is finished we then dispatch a new action to our store with the new value. And so again, this really sits then in the middle. And so therefore the name middleware.
+
+And now just to finish, let's also show the user some loading indicator. So telling them that some asynchronous operation is happening.
+
+So to do that, let's create a new state. And as always, let's call that isLoading which in the beginning will of course be false. But then as soon as we start fetching, let's then actually dispatch an action that will set isLoading to true. So we can do dispatch and then the type of the event, let's call it `account/convertingCurrency`.
+
+```jsx
+
+export function deposit(amount, currency) {
+  if (currency == "USD") return { type: "account/deposit", payload: amount };
+
+  return async function (dispatch, getState) {
+    dispatch({ type: "account/convertingCurrency" });
+
+    const res = await fetch(
+      `https://api.frankfurter.app/latest?base=${currency}&symbols=USD`
+    );
+    const data = await res.json();
+
+    const converted = data.rates.USD;
+
+    dispatch({ type: "account/deposit", payload: converted });
+  };
+}
+
+```
+
+So here we dispatch immediately to let the user know that we are doing some work and then in the end as soon as we're done with that work we dispatch the new value into the store. So then it reaches our reducer. And so now let's then implement that new action in accountSlice.js.
+
+```jsx
+
+case "account/convertingCurrency":
+  return {
+    ...state,
+    isLoading: true,
+  };
+
+```
+
+And so now in the end do you think that in the end we should then dispatch another action? So the one, basically set isLoading back to false.
+
+Well, we don't have to because that's the beauty of updating multiple states at the same time with the reducer. So all we have to do is to come here into `account/deposit` and then set the isLoading to false.
+
+And so now all we have to do is to then get that from the state. And then we can use that, in Jsx, close to the button. So, here we can use the disabled prop and set that to is loading And so then whenever this is true, we will not be able to click on that button. And then inside the button text, let's do some conditional rendering.
+
+```js
+// AccountOperations.js
+const dispatch = useDispatch();
+const {
+  loan: currentLoan,
+  loanPurpose: currentLoanPurpose,
+  balance,
+  isLoading,
+} = useSelector((store) => store.account);
+
+
+
+// JSX
+<button onClick={handleDeposit} disabled={isLoading}>
+  {isLoading ? "Converting..." : `Deposit ${depositAmount}`}
+</button>
+```
+
+Now the beauty of what we just implemented here is that this component(AccountOperations.js) here actually has no idea that the amount is converted behind the scenes. So that conversion is completely hidden from our component and instead it is encapsulated right here in the accountSlice. So it's happening in the centralized place. And if we had other API calls or other asynchronous operations in these other action creators, then of course they would also be in this file. So again, they would then all be in this one centralized place, not spread all over the application. And so with this we can keep this component(AccountOperations) really tidy and clean.
+
+So I hope this wasn't all too confusing and what I mostly want you to retain is that **when we are using thunks we instead of returning an action object from the action creator function, we return a new function.** **And so then the result of this becomes a function and no longer an object. And so then Redux when it sees that we are dispatching a function it will call that function and into that function it will pass in the dispatch function and getState, which we didn't even use in this case.** And so then we can use that dispatch function inside here to delay that dispatching until the asynchronous operation that we want to implement has finished.  
 And so therefore, we can think of this function here sitting between the initial dispatching and the reducer in the store receiving the action.
+
+---
+
+## `The Redux DevTools`
+
+So I believe I mentioned in the beginning of the section that Redux comes with amazing developer tools just like React. And so let's now install and use those dev tools.
+
+And just like with middleware, installing the Redux dev tools is a 3 step process. So first, we need to install the Google Chrome extension. So let's do that immediately.
+
+**Redux DevTools** `Google Chrome Extension`
+
+Then next up we actually need to also install the corresponding npm package and so that one is called `npm install redux-devtools-extension`. So let's wait for it.
+
+```bash
+npm install redux-devtools-extension
+```
+
+And so now this npm package gives us one function that we need to use. So let's bring in compose with dev tools. So exactly this one.  
+
+And so now this is gonna look a little bit weird because what we need to do is to wrap this apply middleware in the **composeWithDevTools**. Give it a save and with this we should be good to go.
+
+```js
+import { composeWithDevTools } from "redux-devtools-extension";
+
+const store = createStore(
+  rootReducer,
+  composeWithDevTools(applyMiddleware(thunk))
+);
+```
+
+And so now in the chrome  you should get a new tab for `redux`.
+
+Let's explore this. So what we need to do is to test this is to dispatch some actions. So let's do that, and there we go. So here we now see our first action that was dispatched. So with the name of customer slash create customer. And so then here we can see the action object. So again, with the type and the payload and then the state that resulted from dispatching this action. Alright. And if we keep going here, let's say we deposit $200 and so then again we see the new state that has been created after this action has been dispatched, and we can see the action itself as well.
+
+![Screenshots Redux Dev Tools](ss/redux-dev-tool.png)
+
+And let's try that again but this time converting from US dollar or actually from Euro to US dollar and then what what happened down. So now we do indeed get our 2 actions dispatched. So first the converting currency action. And then this next one here where we then after that value has arrived, finally deposit. So it's loading is then back to false and then we see our new balance right on UI.
+
+Okay. Let's try another one so that afterwards I can show you the `coolest` feature of these dev tools. So basically, what we can do is to now jump around between these different state transitions. So for example, we can say that we want to jump back.
+
+Okay. So I think that you can see how this can be really really useful if you have a lot of different state transitions and a really complex state. So then you can basically time travel between these different transitions in order to maybe find some bug or some problem that you have.
+
+We can also actually manually dispatch some actions form google chrome. So like CSS we could write actions in react dev tool.
+
+Let's find some bugs here. So notice that when I clicked on deposit again, it actually dispatched the action of account converting currency. So that's strange. Right? So let's see what happened there. So where is this action here actually dispatched?
+
+Great. So I think with this you get the gist of how this dev tool extension here works. So if you want you can play around a little bit more with this and do your own experiments. And then once you're done with that let's move on to the more modern Redux with Redux Toolkit.
+
+---
+
+## `What is Redux Toolkit (RTK)`
+
+So now that we understand the fundamentals of Redux, it's time to take the next step and learn about the modern way of writing Redux, which is **Redux toolkit**. And it's advised by the Redux team to now prefer Redux Toolkit over classic Redux. That's because Redux toolkit is an opinionated approach that forces everyone to use best practices that the community has learned over the years. **So basically, Redux toolkit took all these best practices and placed them into this new way of writing Redux.**
+
+Now, does this mean that everything that you just learned is obsolete? Well, not at all. First, without these fundamentals, it's very hard to understand redux toolkit because it is built on top of classic redux. And second, both ways of writing Redux are 100% compatible with each other. So we can actually use classic Redux in one part of the app and Redux toolkit in another part.
+
+**Okay. So that all sounds great, but what's the big deal? So what are the actual advantages of Redux toolkit?** Well, the biggest advantage is certainly that Redux toolkit allows us to write a lot less code to achieve the exact same result as before. So we say that we need a lot less boiler plate code, which is basically code that only sets things up but doesn't really do anything meaningful. And so redux toolkit hides all that stuff like setting up middleware and the developer tools.  
+
+So out of the box, Redux toolkit gives us many things **but the three highlights are:**  
+
+1. **It allows us to write code that actually mutates state inside reducers. Now behind the scenes, a library called immer will convert our code back to non mutating,** so like the one that we have been writing up until this point. But the new code that we're gonna write will look as if we were mutating the state object directly. And in my opinion, this is really the biggest advantage of using Redux toolkit. Because if you have a pretty complex state object with nested objects and arrays, this can actually be a game changer in reducing complexity.
+
+2. **Redux toolkit also automatically creates action creators from our reducers.** And this can be quite helpful as again, it helps us writing less code. It can, however, also create some additional work in some situations as we will experience in practice soon.
+
+3. And finally,**Redux Toolkit will also automatically set up func middleware and the developer tools so that we can focus on writing code that actually does something in the application.**
+
+![What is Redux Toolkit](ss/what-is-redux-toolkit.jpeg)
+
+Alright. And this should be enough of an introduction. And so let's head back to code.
+
+---
+
+## `Creating the Store With RTK`
+
+Let's now start using Redux toolkit by converting our store to this new modern way of writing Redux. And remember how I said that Redux toolkit is 100% compatible with the regular Redux, which means that we can do this upgrade in a very gradual way. So we can start by only converting the store but leaving our slices as they are.
+
+So let's now start by, as always, installing this new tool by writing `npm install @reduxjs/toolkit`.
+
+```bash
+npm install @reduxjs/toolkit
+```
+
+So this looks a bit different from what we're used to but this is just because this at **reduxjs** is basically a namespace in which the creator of this namespace then can publish multiple packages.  
+
+And so remember how earlier we saw that this **`createStore method is deprecated`**. And so now we will use the **`configureStore`** method instead.  
+So let's import configureStore from the package that we just installed. So this **configureStore** function basically wraps around createStore and adds a few functionalities to it.
+
+```js
+// store.js
+import { configureStore } from "@reduxjs/toolkit";
+```
+
+So basically, configureStore does a lot of things automatically for us. So it **automatically will combine our reducers**, it will **automatically add the thunk middleware**, and it will even **automatically set up the developer tools `composeWithDevTools function`**. So all of this will happen automatically, and then in the end of course our store is created and returned.
+
+Now let's actually first duplicate this file(store.js) so that we can once again also keep the original older version(store-v2.js).
+
+So we don't need any of these⤵️ and instead all we need is **configureStore**.
+
+```js
+import { applyMiddleware, combineReducers, createStore } from "redux";
+import { thunk } from "redux-thunk";
+import { composeWithDevTools } from "redux-devtools-extension";
+
+
+const rootReducer = combineReducers({
+  account: accountReducer,
+  customer: customerReducer,
+});
+
+// const store = createStore(accountReducer);
+const store = createStore(
+  rootReducer,
+  composeWithDevTools(applyMiddleware(thunk))
+);
+```
+
+Now all we need now is to call configureStore and then we pass it an object of options. So here we can then specify the root reducer basically. So simply the reducer property and then again an object where we tell Redux toolkit about our two reducers. So let's again call it account which is accountReducer and then also again customer. So CustomerReducer.
+
+```jsx
+const store = configureStore({
+  reducer: {
+    account: accountReducer,
+    customer: customerReducer,
+  },
+});
+```
+
+And this is actually it. So the result of this will be our store. So then down there we export that. And so now our application is working in exactly the same way as before.
+
+```jsx
+// store.js whole code for now
+import { configureStore } from "@reduxjs/toolkit";
+
+import accountReducer from "./features/accounts/accountSlice";
+
+import customerReducer from "./features/customers/customerSlice";
+
+const store = configureStore({
+  reducer: {
+    account: accountReducer,
+    customer: customerReducer,
+  },
+});
+
+export default store;
+
+```
+
+So see how extremely easy it now is to set up a Redux application. All we have to do is to call configureStore and pass it to our two reducers. That's it. Nothing else we have to do. Now then the part where we connect the react application with redux works in the exact same way as before. So nothing changes with the React Redux package that we use on the React site.
+
+Alright. So this simplification of setting up the store is already a huge win. But React toolkit can also help us with writing these state slices themselves.
+
+And so let's see how in the next video.
+
+---
+
+## `Creating the Account Slice`
+
+Let's now convert the account state slice into Redux toolkit. Now, remember how we had already organized all our code into the concept of slices. So we have the **initialState**, we have the **reducer**, and we also have the **action creators** down there in each slice files(accountSlice & customerSlice). And so now with redux-toolkit, this idea of slices actually really got baked into redux itself.  
+So we now have a function called **createSlice** which we can import from redux-toolkit, just like this.
+
+```jsx
+import { createSlice } from "@reduxjs/toolkit";
+```
+
+And so this create slice function gives us 3 big benefits.  
+`First` of all, it will **automatically create action creators from our reducers**.  
+`2nd`, it makes writing these **reducers a lot easier** because we no longer need that switch statement and also the default case is automatically handled.   `And 3rd`, we can actually **mutate now our state inside reducers**. So just as we have learned about previously when we first talked about redux-toolkit.
+
+Now remember how behind the scenes this will then use a library called **immer** which will actually convert our logic back to immutable logic. So behind the scenes redux still requires the logic where we do not mutate a state but we will now be able to convert this kind of logic to a mutating logic.
+
+*And from my experience this last point is actually the biggest advantage of using Redux Toolkit over what we have been doing before.*  And so as I said in the beginning let's now convert all of this.
+
+**accountSlice before converting to redux-toolkit**  
+
+```jsx
+import { type } from "@testing-library/user-event/dist/type";
+import { createSlice } from "@reduxjs/toolkit";
+
+const initialStateAccount = {
+  balance: 0,
+  loan: 0,
+  loanPurpose: "",
+  isLoading: false,
+};
+
+export default function accountReducer(state = initialStateAccount, action) {
+  switch (action.type) {
+    case "account/deposit":
+      return {
+        ...state,
+        balance: state.balance + action.payload,
+        isLoading: false,
+      };
+
+    case "account/withdraw":
+      return {
+        ...state,
+        balance: state.balance - action.payload,
+      };
+
+    case "account/requestLoan":
+      if (state.loan > 0) return state;
+
+      // LATER
+      return {
+        ...state,
+        loan: action.payload.amount,
+        loanPurpose: action.payload.purpose,
+        balance: state.balance + action.payload.amount,
+      };
+
+    case "account/payLoan":
+      return {
+        ...state,
+        loan: 0,
+        loanPurpose: "",
+        balance: state.balance - state.loan,
+      };
+
+    case "account/convertingCurrency":
+      return {
+        ...state,
+        isLoading: true,
+      };
+
+    default:
+      return state;
+  }
+}
+
+export function deposit(amount, currency) {
+  if (currency == "USD") return { type: "account/deposit", payload: amount };
+
+  return async function (dispatch, getState) {
+    dispatch({ type: "account/convertingCurrency" });
+
+    const res = await fetch(
+      `https://api.frankfurter.app/latest?base=${currency}&symbols=USD`
+    );
+    const data = await res.json();
+
+    const converted = data.rates.USD;
+
+    dispatch({ type: "account/deposit", payload: converted });
+  };
+}
+
+export function withdraw(amount) {
+  return { type: "account/withdraw", payload: amount };
+}
+
+export function requestLoan(amount, purpose) {
+  return {
+    type: "account/requestLoan",
+    // payload: { amount: amount, purpose: purpose },
+    payload: { amount, purpose },
+  };
+}
+export function payLoan() {
+  return { type: "account/payLoan" };
+}
+
+```
+
+So this initialState object we will actually keep but the rest let's now comment it out.
+
+After initialState object let's call **createSlice** function which then accepts an object of options. And so this will then in the end return a slice which we can call in this case the accountSlice.
+
+```jsx
+import { createSlice } from "@reduxjs/toolkit";
+
+const initialState = {
+  balance: 0,
+  loan: 0,
+  loanPurpose: "",
+  isLoading: false,
+};
+
+const accountSlice = createSlice({});
+
+// Rest of codes are commented out
+```
+
+**So what do we need to pass in this createSlice function?**
+
+Well, first of all, the **name of the slice which is account**. Then next up the **initialState**. So it's a property called initialState where we then need to pass an initial state. And so since in our case this has the same name that's the same as writing this. And then **finally we need to pass in our reducers.** So this time we will have basically multiple reducers, one reducer for each of these actions.
+
+```js
+const accountSlice = createSlice({
+  name: "account",
+  initialState,
+  reducers: {
+    deposit(state, action) {},
+  },
+});
+```
+
+Okay. And so, let's start writing on those. So, the first one is called deposit and it is a function that again receives the current state and the action. And notice how this deposit is basically the second part of the string that we had in case of switch statement `case "account/deposit":`, So the name is **account** and then slash deposit which is this one. And this deposit is also exactly the name of the action creator that we had before, deposit function. Right?
+
+But anyway, let's now write our logic here and for now we will do it without the asynchronous data, so without the thunk that we had before. So what do we then do in the deposit?
+
+Well, all we do is to change the state. And so now remember we can write mutating logic. So we can do state.balance should become state.balance plus the action dot payload. So the logic of receiving the current state and the action that was dispatched is still exactly the same way as in classic Redux. So the only difference is that here we do no longer return the entire state now and we don't create a new object where we then set the balance property. Instead, we basically mutate the balance property that lives on the state.
+
+So let's keep going withdraw, again state and then the action. And now here we will have something very similar.
+
+Next up, let's do the loan state and action and not withdraw but request loan. So let's see what logic we had. So that's why I'm keeping this file open on the right side.  
+And so here we need again to check whether the loan already exists. So if state.loan is equal zero then we don't want to do anything. Now in this case not doing anything is not returning the state but instead simply returning from this function. So we will not return anything because remember in these new reducers we no longer need to return the entire state.
+
+So we just modify what we want. So in this case we don't want to modify anything. So this is indeed a huge shift and if you were already used to writing it this way because you practice the use reducer hook then this is gonna be an even bigger shift. But for total beginners I believe that this is actually a lot easier and this will become even more apparent when we have nested objects and arrays.
+
+```jsx
+const accountSlice = createSlice({
+  name: "account",
+  initialState,
+  reducers: {
+    deposit(state, action) {
+      // state.balance = state.balance + action.payload;
+      state.balance += action.payload;
+    },
+
+    withdraw(state, action) {
+      state.balance -= action.payload;
+    },
+
+    requestLoan(state, action) {
+      if (state.loan > 0) return;
+
+      state.loan = action.payload.amount;
+      state.loanPurpose = action.payload.purpose;
+      state.balance = state.balance + action.payload.amount;
+    },
+
+    payLoan(state, action) {
+      state.loan = 0;
+      state.loanPurpose = "";
+      state.balance -= state.loan;
+    },
+  },
+});
+
+console.log(accountSlice);
+```
+
+And now let's see what we actually have here. So what the result of creating this slice is because this is actually already it. So this basically functions as our reducer and as our action creators. So let's now, log this to the console. So accountSlice.
+
+So coming here to our console, let's reload. So let's see what we got here. So we have first of all our reducer so which is this function that we will have to export from here and then import in the store. So this is basically our new reducer that the store needs and then here we have this other stuff that we don't really need but then notice how we have these actions. And so these actions are exactly the 4 action creators that we also had before. So it's these 4 ones that we created here.  
+
+And so let's now export all of the stuff that we need. So export, and here let's again use export default for the reducer. So just like we had previously here, only that this time it is accountSlice dot reducer. And now let's also export these 4 functions(actions). So once again just like before. So these are going to be our named exports and first of all we need to take them out of that object. So let's write accountSlice dot actions which is then this object of these 4 right here. And so here we can destructure that and then immediately export them. So deposit withdraw request loan, and pay loan. Give it a save and it seems like we are back to working here. Let's just reload once again.
+
+```jsx
+console.log(accountSlice);
+
+export const { deposit, withdraw, requestLoan, payLoan } = accountSlice.actions;
+
+export default accountSlice.reducer;
+```
+
+So let's deposit and yeah, that works. Nice. Withdrawing should work as well. There we go. Let's request a loan and there we have a problem. So let's use our redux dev tools. So why not? Well, this is a bit too small now apparently.
+
+Let's make these DevTools smaller again. And so let's see what we have here in our request loan action. And by the way, notice here how the action names are exactly the same ones as before. So basically what this means is that our create slice function combines this name with the names of the reducers. And so that's also why here we used this convention first. So this is again the modern way of writing action names and so redux toolkit follows exactly that as well. So it composes these action names with the name and with each of the reducer names as well (with slashes like account/deposit).
+
+But anyway, let's see why we get that problem here And here it is. So again, we are now using the dev tools really to understand some problems. And so notice how the payload is now only 10,000 which was the requested loan but the loan purpose is nowhere to be found.
+
+And so that's why requesting this loan didn't work. And so let's now inspect this a little bit further. And so what I want to do now is to log to the console now calling the request loan function and then with the same values or something similar. And so this is now simply an action creator. All this will do is to return an action object.
+
+```jsx
+export const { deposit, withdraw, requestLoan, payLoan } = accountSlice.actions;
+
+console.log(requestLoan(1000, "buy car"));
+
+export default accountSlice.reducer;
+```
+
+Right? And indeed, here it is. And also indeed, we see that we only get the first value(1000) but not the second one(buy car). **And the reason for this is that by default these automatically created action creators only accept one single argument. And so that then becomes action dot payload.**
+
+That's why earlier we also got this not a number because we were then trying to add this payload dot amount to the loan which didn't exist. So the amount and the purpose were actually not received.
+
+Alright. And so this is basically one of the limitations of having this opinionated structure. So if these action creators are automatically created then we cannot really configure them. So we cannot easily make them receive two arguments.  
+
+However, luckily for us there is a solution for this that Redux toolkit implemented for us. So basically what we have to do is to **prepare the data before it reaches the reducer.**
+
+And so what we have to do now here is to separate this. So here we now need a new object. And then we need to call this function reducer and then before calling reducer we need to prepare that data with a **prepare** method.  
+**And so this method is where we can then accept the data that we want.** So basically this can have the parameters that earlier we had in our action creator. So that's the amount and the purpose. Alright.  
+And so what we need to do here now is to return a new object which will then become the payload object in the reducer. So that's why this is called prepare.
+
+```js
+requestLoan: {
+  prepare(amount, purpose) {
+    return {
+      payload: { amount, purpose },
+    };
+  },
+
+  reducer(state, action) {
+    if (state.loan > 0) return;
+
+    state.loan = action.payload.amount;
+    state.loanPurpose = action.payload.purpose;
+    state.balance = state.balance + action.payload.amount;
+  },
+},
+```
+
+And so this payload should become an object with amount and purpose. Alright. And so this is what we need to do if we want our action creator to receive more than just one argument. Now, of course, we could also have configured it in a way that we directly pass in that object immediately. And so then we would also have only one argument. But if you do want these 2 arguments then this is the way to go. And since I wanted to show you this we just did it this way. And also this way we then didn't have to change anything in our code.
+
+So let's check that, and there we go. And then paying it works just the same way or actually it doesn't. Let's see. So now we get 3,000 and so after paying, it should go back. So what's wrong here?
+
+And I can see the problem already. So here we run into one of the pitfalls that comes with the fact that we are now mutating our state. So it has advantages but it also has its problems. So notice how here in the very beginning we set the loan to 0. And so then here in this next line of code this is already 0. And so then we simply subtract 0 from the balance which will not change it.
+
+```js
+// Doesn't Works
+// payLoan(state, action) {
+//   state.loan = 0;
+//   state.loanPurpose = "";
+//   state.balance -= state.loan;
+// },
+
+
+// Change the order 
+payLoan(state, action) {
+  state.balance -= state.loan;
+  state.loanPurpose = "";
+  state.loan = 0;
+},
+```
+
+And so this now needs to come first. So we now need to pay attention to the order of the code. So let's try that again. Alright.
+
+Now pay it back and beautiful. Now that works and so we successfully converted now the slice that we had before to this one that fits with the new philosophy of Redux toolkit.
+
+Now if you want my personal opinion I do actually prefer in a simple situation like this to write what we had earlier. So I like this one more.
+
+But that's just what happens when you trade your do whatever you want approach for an opinionated approach like Redux toolkit, right? What I do like a lot is of course this way that we now configure the store. So this is perfect and it's a lot easier. But as you saw we can, if we want keep our slices in the way that we had them before, so without using Redux toolkit. But there's also advantages to writing it like this.
+
+And so as always you need to decide by yourself and on a case to case basis. And with that being said, let's now move on to the next lecture and also implement the func.
+
+```jsx
+import { type } from "@testing-library/user-event/dist/type";
+import { createSlice } from "@reduxjs/toolkit";
+
+const initialState = {
+  balance: 0,
+  loan: 0,
+  loanPurpose: "",
+  isLoading: false,
+};
+
+const accountSlice = createSlice({
+  name: "account",
+  initialState,
+  reducers: {
+    deposit(state, action) {
+      // state.balance = state.balance + action.payload;
+      state.balance += action.payload;
+    },
+
+    withdraw(state, action) {
+      state.balance -= action.payload;
+    },
+
+    requestLoan: {
+      prepare(amount, purpose) {
+        return {
+          payload: { amount, purpose },
+        };
+      },
+
+      reducer(state, action) {
+        if (state.loan > 0) return;
+
+        state.loan = action.payload.amount;
+        state.loanPurpose = action.payload.purpose;
+        state.balance = state.balance + action.payload.amount;
+      },
+    },
+
+    payLoan(state, action) {
+      state.balance -= state.loan;
+      state.loanPurpose = "";
+      state.loan = 0;
+    },
+  },
+});
+
+console.log(accountSlice);
+
+export const { deposit, withdraw, requestLoan, payLoan } = accountSlice.actions;
+
+console.log(requestLoan(20, "buy car"));
+
+export default accountSlice.reducer;
+
+/*
+
+// Code before using Redux Toolkit
+
+export default function accountReducer(state = initialState, action) {
+  switch (action.type) {
+    case "account/deposit":
+      return {
+        ...state,
+        balance: state.balance + action.payload,
+        isLoading: false,
+      };
+
+    case "account/withdraw":
+      return {
+        ...state,
+        balance: state.balance - action.payload,
+      };
+
+    case "account/requestLoan":
+      if (state.loan > 0) return state;
+
+      // LATER
+      return {
+        ...state,
+        loan: action.payload.amount,
+        loanPurpose: action.payload.purpose,
+        balance: state.balance + action.payload.amount,
+      };
+
+    case "account/payLoan":
+      return {
+        ...state,
+        loan: 0,
+        loanPurpose: "",
+        balance: state.balance - state.loan,
+      };
+
+    case "account/convertingCurrency":
+      return {
+        ...state,
+        isLoading: true,
+      };
+
+    default:
+      return state;
+  }
+}
+
+export function deposit(amount, currency) {
+  if (currency == "USD") return { type: "account/deposit", payload: amount };
+
+  return async function (dispatch, getState) {
+    dispatch({ type: "account/convertingCurrency" });
+
+    const res = await fetch(
+      `https://api.frankfurter.app/latest?base=${currency}&symbols=USD`
+    );
+    const data = await res.json();
+
+    const converted = data.rates.USD;
+
+    dispatch({ type: "account/deposit", payload: converted });
+  };
+}
+
+export function withdraw(amount) {
+  return { type: "account/withdraw", payload: amount };
+}
+
+export function requestLoan(amount, purpose) {
+  return {
+    type: "account/requestLoan",
+    // payload: { amount: amount, purpose: purpose },
+    payload: { amount, purpose },
+  };
+}
+export function payLoan() {
+  return { type: "account/payLoan" };
+}
+
+*/
+
+```
+
+```js
+// store.js
+
+import { configureStore } from "@reduxjs/toolkit";
+
+import accountReducer from "./features/accounts/accountSlice";
+
+import customerReducer from "./features/customers/customerSlice";
+
+const store = configureStore({
+  reducer: {
+    account: accountReducer,
+    customer: customerReducer,
+  },
+});
+
+export default store;
+
+```
+
+---
+
+## `Back to Thunks`
+
+Next up, let's get our thanks back. So basically, to get back to functionality of converting currencies. Now in order to create thanks in Redux toolkit, we can use the **createAsyncThunk** function that Redux Toolkit provides us. However, using this function is in my opinion a lot of extra work when there is an easier solution which is to simply use the action creator function that we already used before.
+
+Now if you are really interested in the create async thunk function, so basically in the redux-toolkit way of doing things we will use it in a future project. But for now we will just do it in the easy way.
+
+So let's copy this function(deposit function from accountSlice) and paste it up there.
+
+```js
+// accountSlice.js
+export const { deposit, withdraw, requestLoan, payLoan } = accountSlice.actions;
+
+export function deposit(amount, currency) {
+  if (currency == "USD") return { type: "account/deposit", payload: amount };
+
+  return async function (dispatch, getState) {
+    dispatch({ type: "account/convertingCurrency" });
+
+    const res = await fetch(
+      `https://api.frankfurter.app/latest?base=${currency}&symbols=USD`
+    );
+    const data = await res.json();
+
+    const converted = data.rates.USD;
+
+    dispatch({ type: "account/deposit", payload: converted });
+  };
+}
+export default accountSlice.reducer;
+```
+
+And this will then actually automatically work out of the box. And so that's because Thunks are automatically provided in Redux Toolkit. So we don't have to install anything and this will simply already work. So no setup required. The only thing that we need to do is to then no longer export this action creator(deposit) that we automatically get. So remove that from there.
+
+```js
+export const { withdraw, requestLoan, payLoan } = accountSlice.actions;
+```
+
+And so again, for deposit we now are going to use our own one. Just make sure that it has exactly the same name and that the type, so the action type has exactly this shape. So again, that's the name of the slice and then slash the name of the reducer. So it's important that this follows the same convention. And with that, Redux is then smart enough to figure out that this is the action creator for that reducer. Alright.
+
+And so all we have to do is to now also create a reducer for converting currency.
+
+```js
+convertingCurrency(state) {
+  state.isLoading = true;
+},
+```
+
+And this should already be it.
+
+Nice. So now we also implemented a func here in this Redux toolkit logic. However, again, we did not really do it in the react toolkit way but this is actually completely fine as well. So here we did then not use the automatic action creator that has been created by create slice, but we used our own. Alright.
+
+And again, later in the next project we will then also look at that other way of doing the exact same thing. And now just to finish, all we have to do is to also convert our customer slice. And so that will be the topic of our final lecture in this section.
+
+---
+
+## `Creating the Customer Slice`
+
+Okay. So the last thing that we need to do is to also convert our customer slice to Redux toolkit.
+
+Now just before starting notice that createCustomer now needs these two arguments. So it receives the full name and the national ID which means that we will again need to prepare the payload just like we did.
+
+And so that payload is made out of the full name, the national ID, and then remember also the created at property which we set to new date and then to this ISO string. Alright. And so this is again the kind of small side effect that you should not do inside the reducer but instead right here in this prepare function. So in case you wanted to add this created at here or maybe you also wanted like for example to compute a random ID then you should not do that in the reducer. But instead then you should also create a prepare method like this. So even if this only takes one input then you still would have to do this prepare function if you wanted to create a date or assign a random ID or something like that.
+
+Alright. But anyway, now we can write our reducer which gets the state and then that payload that we just created here. So exactly this object. So this is what our reducer will now receive. And so now we can do what we did before which is to then set all these properties. So the full name will become action.
+
+```js
+import { createSlice } from "@reduxjs/toolkit";
+
+const initialState = {
+  fullName: "",
+  nationalID: "",
+  createdAt: "",
+};
+
+const customerSlice = createSlice({
+  name: "customer",
+  initialState: initialState,
+  reducers: {
+    createCustomer: {
+      prepare(fullName, nationalID) {
+        return {
+          payload: {
+            fullName,
+            nationalID,
+            createdAt: new Date().toISOString(),
+          },
+        };
+      },
+      reducer(state, action) {
+        state.fullName = action.payload.fullName;
+        state.nationalID = action.payload.nationalID;
+        state.createdAt = action.payload.createdAt;
+      },
+    },
+  },
+});
+
+```
+
+So this is one of the reducers and the other one is for updating the name. So update name and here it's an easier one because we don't have to prepare the data.
+
+So all that's gonna happen is that state dot full name will become action dot payload. And so now all we have to do is to export all of this. So create customer and update name we will take from the customer slice dot actions. So this again will create the action creators which we then destructure and export. And finally we export default the customer slice dot reducer.
+
+```js
+import { createSlice } from "@reduxjs/toolkit";
+
+const initialState = {
+  fullName: "",
+  nationalID: "",
+  createdAt: "",
+};
+
+const customerSlice = createSlice({
+  name: "customer",
+  initialState: initialState,
+  reducers: {
+    createCustomer: {
+      prepare(fullName, nationalID) {
+        return {
+          payload: {
+            fullName,
+            nationalID,
+            createdAt: new Date().toISOString(),
+          },
+        };
+      },
+      reducer(state, action) {
+        state.fullName = action.payload.fullName;
+        state.nationalID = action.payload.nationalID;
+        state.createdAt = action.payload.createdAt;
+      },
+    },
+
+    updateName: (state, action) => {
+      state.fullName = action.payload;
+    },
+  },
+});
+
+export const { createCustomer, updateName } = customerSlice.actions;
+
+export default customerSlice.reducer;
+```
+
+And with this our application should be back to working.   So now that works and let's see. Beautiful.
+
+And we can see again in our dev tools very nicely that indeed the correct action has been created. And so then we should also be able to dispatch manually again. So update name and the payload should be test. And so that should work just like before and beautiful. Okay.
+
+And this is it for the small application. So hopefully you had some fun learning Redux. So I really liked this section actually. So I think it was a lot of fun working through this code really starting from the very beginning. So especially here with these initial stores before redux toolkit and then really seeing how all the pieces fit together in the end. So hopefully all of that made sense and clicked for you. So that now you feel confident in using Redux if you want to or if you have to.
+
+Now, I just saw one final thing which is the title here that we haven't changed yet. So let's just copy this and also place it in the title of the index dot HTML file because that will give us a bit of a surprising result which is that then in the redux dev tools we get the title right here. So this is helpful if we have multiple tabs open and when all of them use redux we can simply switch between them right here.
+
+So this dev tools here is basically the same tool for all of the pages or all the tabs that are currently open. But anyway, with this we really now finish this section and all we have to do is to now compare Redux with the context API that we have already learned before earlier. So those are two things that people like to compare a lot. And so that's why in the next video we will do that together.
+
+---
+
+## `Redux vs Context API`
+
+Okay. And now to finish this section, we're back to another one of these lectures that compares 2 things. And this time, **comparing Redux with React's context API**.
+
+S o as I have mentioned in an earlier video, many people started seeing the context API, especially when coupled with useReducer as a complete replacement for Redux. And while this can certainly be true in some situations, let's not simply follow these trends, but instead have a more nuanced and fact based discussion here.
+
+So in this lecture, I want to summarize what we have learned about both these solutions to manage global state by taking a look at their pros and cons, and ultimately giving you recommendations on when to use context and when to use Redux.
+
+So the **first advantage of the context plus use reducer solution** is that these features are **already built into React**. While if you want to use Redux, you need to install additional packages, which is not only more work, but will also increase your bundle size.
+
+Now, in terms of setup, it's quite straightforward to set up a single context and useReducer, pass the state value into the context and then provide it to the app. However, for each additional state slice, you will need to do the same thing again. So you will need to set up everything from scratch for each new piece of state or each new slice of state. And this can lead to something that we call **provider hell** where you end up with many many context providers in your main app component. On the other hand, Redux requires a bit more work to do the initial setup but once that is done, it's quite straightforward to add additional state slices. All you need to do is to create a new slice file and add your reducers, but you don't need to create another provider and another custom hook.
+
+Now, when it comes to async operations like fetching data, the context API has no built in mechanism for that as we have experienced ourselves in the world wise application.  
+Redux, on the other hand, has support for middleware. And while middleware is not necessarily easy to use, it does give us a way to handle asynchronous tasks right inside the state management tool. Just keep in mind that we should probably not use any of these tools for remote state anyway. But sometimes it can still be useful to be able to fetch just some single data point from an API. So just like we did with the currency conversion in this section.
+
+Now moving on, as we saw in the previous section, optimizing the performance of the context API and use reducer solution can require some work. While Redux comes with many optimizations out of the box. So including minimizing wasted renders.
+
+And now finally, to finish our list of pros and cons, let's consider that Redux has some excellent dev tools. While for the context API, we can only use the simple react developer tools. And this can make a huge difference in applications where the state is truly huge and complex and is updated a lot.
+
+![Context API VS. Redux](ss/context-api-vs-redux.jpeg)
+
+So from this list, it appears that Redux has way more pros than the context API, but that's not really the point here. So we're not counting the pros and cons. I'm just giving you the facts.
+
+**But now based on these facts, let's move on to some actual usage `recommendations`.**  
+
+So the general consensus seems to be use the context API plus React Hooks for global state management in small applications and use Redux to manage global state in large apps. But that's not super helpful and so let's dig a bit deeper.
+
+*Just know that in general, there is never a right answer that is gonna fit every single project out there. So the technical choice between any of these solutions will always depend entirely on the project's needs.*
+
+When for example, all you need is to share a value that doesn't change very often, then the context API is perfect for that. And some examples are the app color theme, the user's preferred language or the currently authenticated user. So these will rarely change and so you can use a context for those because there will be no need to optimize the context in this situation.  
+Now on the other hand, when you do have lots of UI state that needs frequent updates like a shopping cart, the currently open tabs or some complex data filters, then redux might be the way to go. And this is because as we just learned, redux is already heavily optimized for these frequent updates.  
+As we also already touched on, redux is perfect when you have complex state with nested objects because then you can mutate state in Redux toolkit, which is really really helpful.  
+
+So these are the 2 situations in which I would personally reach for Redux. Now, they are not that common when it comes to UI state. And so, again, this is why Redux has fallen a bit out of favor recently.
+
+Now, going back to the context API, it can be very helpful when we have a simple prop drilling problem that we need to solve or when we need to manage some state in a local sub tree of the application.  
+So in that case, it's not really global state, but state that is global to a smaller sub part of the app, basically. And one important use case of this is the advanced compound component pattern that we're gonna study later.
+
+![When to use Context API or Redux](ss/when-use-context-api-or-redux.jpeg)
+
+Okay. So again, you need to choose what's best for your particular project and not simply follow some trend that you read about online. And that's true for every technological choice that you're gonna make.  
+But this whole context versus Redux thing is a big debate that's been going on for some time in the React community, which is why I felt that I had to make this video about it.
+
+With this, we have just finished yet another section. So I hope that you feel confident with Redux now and to see you back here very soon.
+
+---
+---
+
+***`12/12/2024`***  
+***`KiwiLogics Software House`***
 
 ---
