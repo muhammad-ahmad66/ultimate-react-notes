@@ -13,6 +13,7 @@
 9. [Handling Errors With Error Elements](#handling-errors-with-error-elements)
 10. [Fetching Orders](#fetching-orders)
 11. [Writing Data With React Router Actions](#writing-data-with-react-router-actions)
+12. [Error Handling in Form Actions](#error-handling-in-form-actions)
 
 ---
 
@@ -991,74 +992,496 @@ And it is indeed really nice that we automatically get that loading indicator ri
 
 ## `Writing Data With React Router Actions`
 
-Let's now change subjects and learn how we can use React Router's actions to write data or to mutate data on the server. **So while the loaders that we used earlier are to read data, actions are used to write data or to mutate data. So state that is stored on some server.** Or in other words actions allow us to manage this remote server state using action functions and forms that we then wire up to routes similar to what we did earlier with the loaders. Okay.
+Let's now change subjects and learn how we can use React Router's actions to write data or to mutate data on the server. **So while the loaders that we used earlier are to read data, **actions are used to write data or to mutate data.** So state that is stored on some server.** Or in other words **actions allow us to manage remote server state using action functions and forms** that we then wire up to routes similar to what we did earlier with the loaders. Okay.
 
-So remember from the project requirements that orders are made by sending a post request with the order data to the API. And so these actions and forms that we just talked about are ideal to create new orders. And so that's what we're going to do in this lecture. So we will come now to this create order page component and there we will create a form and we will create an action. So let's open up this component and let's just take a quick look.
+So remember from the project requirements that orders are made by sending a post request with the order data to the API. And so these actions and forms that we just talked about are ideal to create new orders. And so that's what we're going to do in this lecture.
 
-So here we already have a card which is basically this fake cart right here. So when we submit a new order we need to submit the user data plus the selected pizzas which are stored in the cart. Now we don't have that cart yet but we still want to already learn how to create a new order using these actions and forms. And therefore for now we are just going to use this fake cart object. Then you see we actually already have the form as well and it has an input field for the customer.
+So we will come now to this createOrder page component and there we will create a form and we will create an action.
 
-So for the customer name, then for the customer phone and the address and also to mark whether the order is priority or not. So let's actually come here to that URL which is order slash new. And so here we see exactly that form that I just described. Okay. Now to make this form work nicely with React Router, we need to replace this with a form component that React Router gives us.
+```jsx
+// CreateOrder.jsx Starter File
+import { useState } from "react";
 
-So let's replace this form with the upper case form that we can again import from react router dom. So make sure that you have this line right here. Then let's just see if it closed correctly, and yeah, it did. Then here we also need to specify another method which is going to be a post request. So just like we said earlier, we are doing a post request to create a new order.
+// https://uibakery.io/regex-library/phone-number
+const isValidPhone = (str) =>
+  /^\+?\d{1,4}?[-.\s]?\(?\d{1,3}?\)?[-.\s]?\d{1,4}[-.\s]?\d{1,4}[-.\s]?\d{1,9}$/.test(
+    str
+  );
 
-But here we could also use patch and delete but not get. So the get method here wouldn't work in the way that we will see throughout this lecture but post patch and delete are going to work. Then we could also specify the action where we could then write the path that this form should be submitted to. But this is not going to be necessary because by default React router will simply match the closest route. So there's no need to write order slash new.
+const fakeCart = [
+  {
+    pizzaId: 12,
+    name: "Mediterranean",
+    quantity: 2,
+    unitPrice: 16,
+    totalPrice: 32,
+  },
+  {
+    pizzaId: 6,
+    name: "Vegetale",
+    quantity: 1,
+    unitPrice: 13,
+    totalPrice: 13,
+  },
+  {
+    pizzaId: 11,
+    name: "Spinach and Mushroom",
+    quantity: 1,
+    unitPrice: 15,
+    totalPrice: 15,
+  },
+];
 
-Okay. But let's actually leave this here like this because it also does work. And so I'm just going to leave both of these ways here. Now this on its own doesn't do anything yet and so now we need to specify or we need to create an action. And so this is similar to the loaders that we created earlier.
+function CreateOrder() {
+  // const [withPriority, setWithPriority] = useState(false);
+  const cart = fakeCart;
 
-So we will also create now a function that we are going to export from here. So export function and then by default as a convention we just call this function action. Now, as soon as we submit this special form here that will then create a request that will basically be intercepted by this action function as soon as we have it connected with React Router. So here with this route, but more about that later. So again, whenever this form here will be submitted behind the scenes react router will then call this action function and it will pass in the request that was submitted.
+  return (
+    <div>
+      <h2>Ready to order? Lets go!</h2>
 
-And so here we can then get access to that. Alright. Then here let's create a variable called form data. And then here we just await request which is this request that we just got dot form data. And this is actually just a regular web API.
+      <form>
+        <div>
+          <label>First Name</label>
+          <input type="text" name="customer" required />
+        </div>
 
-So this form data here is provided by the browser. So now this is complaining because this now needs to be an a sync function. Then let's log something to the console. So this form data here, and then I believe that we also need to always return something. So for now let's just return null here.
+        <div>
+          <label>Phone number</label>
+          <div>
+            <input type="tel" name="phone" required />
+          </div>
+        </div>
 
-And now as a final step we need to connect these 2. So we need to come to our route and then connect this action to the route. So let's do that, and as always let's first import it here. So here action as create, let's say, create order action. And then here, let's specify the action property.
+        <div>
+          <label>Address</label>
+          <div>
+            <input type="text" name="address" required />
+          </div>
+        </div>
 
-And then here is where we specify that one. So create order action just like this. And so now whenever there will be a new form submission on this route right here, so on this path then this action that we specified here will be called. And so that's then this function right here. So let's just reload this here.
+        <div>
+          <input
+            type="checkbox"
+            name="priority"
+            id="priority"
+            // value={withPriority}
+            // onChange={(e) => setWithPriority(e.target.checked)}
+          />
+          <label htmlFor="priority">Want to yo give your order priority?</label>
+        </div>
 
-Let's just test this with something, order now, and beautiful. So we have something here even though we can't really see it here. So let's actually also convert it to an object. So from entries form data. Then let's just log the data itself, try that again, and here we go.
+        <div>
+          <button>Order now</button>
+        </div>
+      </form>
+    </div>
+  );
+}
 
-So it's a bit difficult to work with this form data object here, but this part is not really so important. So this is just some standard or some recipe that we always will need to follow. But anyway, what matters here is that it was really really easy to get all this data out of the form here into this function. So notice how this entire form right here works completely without any JavaScript and without any on submit handlers, for example. So all we have is this form here and then React Router takes care of the rest.
+export default CreateOrder;
+```
 
-We also didn't have to create any state variables here for each of these input fields and we didn't even have to create a loading state. So React router will do all of this automatically without us having to do anything. And the idea behind all this is to basically allow us to go back to the basics. So to the way HTML used to work back in the day before everyone started using JavaScript for the front end. So back then we simply created HTML forms similar to this one and then when we submitted them a request was sent to the server which then did the work that it needed to.
+So here⤴️ we already have a cart. So when we submit a new order we need to submit the user data plus the selected pizzas which are stored in the cart. Now we don't have that cart yet but we still want to already learn how to create a new order using these actions and forms. And therefore for now we are just going to use this⤴️ fake cart object. Then you see we actually already have the form as well and it has an input field for the customer.
 
-So this here is now very similar. The only difference is that the data then gets into this action where we can then do our action. Well, just as the name says. The only thing that we need to do again to make this work is to connect this URL here with the action. Alright.
+So for the customer name, then for the customer phone and the address and also to mark whether the order is priority or not. So let's actually come here to that URL which is order slash new `/order/new`. And so we see exactly that form that I just described.
 
-Now next up we also want to get our card data here into this action. So the card is right here in this component but we also now want to basically submit it in the form so that we can then get access to it in the action. So you might think that we can just use this variable here right in the action but later on this card will actually come from Redux. And so then we can really only get this card right here in the component. Now thankfully for us there is a nice way of actually getting some data into the action without it being a form field.
+Now to make this form(in CreateOder.js file) work nicely with React Router, we need to replace this with a form component that React Router gives us. So let's replace this form with the upper case form(form -> Form) that we can again import from react router dom.
 
-So what we can do is a hidden input. So we can do that anywhere in the form but let's just do it here at the very end. So if we set it to type hidden and the name to cart and the value to jason. Stringify because this card is right now an object but here we can only have strings. So we need to convert this to a string here.
+```js
+import { Form } from "react-router-dom";
 
-So if we do it like this then later on when we submit this form again it should then show up right here in our form data as well. So let's actually try that immediately and there it is. So right there, but what about this priority field? So I think I have to actually select it here in order for it to show up and indeed there it is. So now we have priority on.
+function CreateOrder() {
+  // const [withPriority, setWithPriority] = useState(false);
+  const cart = fakeCart;
 
-So we have our raw data right here in the action now but we need to model it a little bit. So this priority should be always existent in the data that we are going to submit and it should be true or false, not this on. And of course the card also needs to be converted back to an object. And so let's now quickly do that. So let's create a new variable here called the order just like this, and then let's start by spreading in the data and then we will just overwrite some of them.
+  return (
+    <div>
+      <Form>
+      ...
+      </Form>
+    </div>
+  );
+}
+```
 
-So the card should be jason. Parse fdata.cart and then the priority will be data.priority and then we just check if it is equal to on. More like this. And then let's log it to the console. Let's clean this up and this looks beautiful.
+Then here in <From method="POST"></From> we also need to specify another method which is going to be a POST request. But here we could also use **patch** and **delete** but not **get**. So the get method wouldn't work in the way that we will see throughout this lecture but post patch and delete are going to work. Then we could also specify the action where we could then write the path that this form should be submitted to. **But this is not going to be necessary because by default React router will simply match the closest route. So there's no need to write order slash new.**
 
-So here now we have all card back to being an array and priority is set to true. And if we change this here now then the priority should be false. Nice. So we have the data now in the shape that we want it to be. And so now we can use it to create a new order.
+```js
+{/* <Form method="POST" action="/order/new"> */} // no need of specifying the action 
+<Form method="POST">
 
-So we already once again have an API endpoint for that inside a function right here in API restaurant. So we have the create order function which receives a new order object as an argument. So that's pretty straightforward. And so let's do create order and make sure that it has been correctly imported, and then we pass in the order. Now, let's just open up this function here again so that I can show you that this create order function actually returns the newly created object.
+```
 
-So the new order is actually returned. And so the nice thing about that is that we can now await that here. So we can call this here new order and then what we will want to do is to immediately redirect the page to the order slash ID. So basically showing the user all the information about that new order. So basically what we implemented in the previous lecture.
+Now this⤴️ on its own doesn't do anything yet and so now **we need to specify or we need to create an action.** And so this is similar to the loaders that we created earlier.
 
-So let's do that here but we cannot do it using the navigate function because the navigate function comes from calling the use navigate hook but we cannot call hooks inside this function. So hooks can only be called inside components. And so here we need to use another function which is called redirect. So this is basically, another function that is provided to us by react router which basically will just create a new response or a new request. I'm not really sure but it's also not so important.
+So we will also create now a function that we are going to export from CreateOrder.jsx.
 
+So export function and then by default as a convention we just call this function **action**. **Now, as soon as we submit the Form, that will then create a request that will be intercepted by this action function as soon as we have it connected with React Router.** So again, whenever this form will be submitted behind the scenes React Router will then call this action function and it will pass in the request that was submitted. And so here in action function we can then get access to that request. Alright. Then here let's create a variable called formData. And then we just await request which is this request that we just got, dot formData.
+
+```jsx
+export async function action({ request }) {
+  const formData = await request.formData();
+}
+```
+
+And this is actually just a regular web API. So this form data is provided by the browser. Then let's log this formData to the console. And I believe that we also need to always return something from the action function. So for now let's just return null.
+
+```jsx
+export async function action({ request }) {
+  const formData = await request.formData();
+  console.log(formData);
+
+  return null;
+}
+```
+
+And now as a final step we need to connect these two. So we need to come to our route and then connect this action to the route.
+
+So let's do that, and as always let's first import it in App.jsx. So here action as createOrderAction.
+
+```jsx
+import CreateOrder, { action as createOrderAction, } from "./features/order/CreateOrder";
+
+---
+
+{
+  path: "/order/new",
+  element: <CreateOrder />,
+  action: createOrderAction,
+},
+
+```
+
+**And so now whenever there will be a new form submission on this route `/order/new`, so on this path then this action that we specified here will be called.**
+
+Yeah, Beautiful. So we have something in log even though we can't really see it here. So let's actually also convert it to an object. So `fromEntries(formData)`.
+
+Then let's just log the data itself, try that again, and here we go.
+
+```jsx
+export async function action({ request }) {
+  const formData = await request.formData();
+  const data = Object.fromEntries(formData);
+  console.log(data);
+
+  return null;
+}
+
+```
+
+So it's a bit difficult to work with this formData object, but this `const data = Object.fromEntries(formData);` part is not really so important. So this is just some standard or some recipe that we always will need to follow. But anyway, what matters here is that it was really really easy to get all this data out of the form here into this function.
+
+**So notice how this entire form works completely without any JavaScript and without any on submit handlers, for example. So all we have is this form here and then React Router takes care of the rest.**  
+We also didn't have to create any state variables here for each of these input fields and we didn't even have to create a loading state. So React router will do all of this automatically without us having to do anything. And the idea behind all this is to basically allow us to go back to the basics.
+
+```jsx
+{/* <Form method="POST" action="/order/new"> */}
+<Form method="POST">
+
+</Form>
+```
+
+So to the way HTML used to work back in the day before everyone started using JavaScript for the front end. So back then we simply created HTML forms similar to this one and then when we submitted them a request was sent to the server which then did the work that it needed to.
+
+So this here is now very similar. **The only difference is that the data then gets into this action where we can then do our action.** Well, just as the name says. The only thing that we need to do again to make this work is to connect this URL here with the action. Alright.
+
+Now next up we also want to get our cart data into this action. Now the cart in right in the CreateOrder component(see in above stater code) But we also now want to basically submit it in the form so that we can then get access to it in the action. So you might think that we can just use this `cart` variable right in the action but later on this cart will actually come from Redux. And so then we can really only get this card right in this component. **Now thankfully for us there is a nice way of actually getting some data into the action without it being a form field.**
+
+So what we can do is a `hidden input.` So we can do that anywhere in the form but let's just do it at the very end. So if we set it to type `hidden` and the name to cart and the value to JSON.stringify(). Stringify because this card is right now an object but here we can only have strings. So we need to convert this to a string.
+
+```jsx
+// in Form (CreateOder.jsx)
+<input type="hidden" name="cart" value={JSON.stringify(cart)} />
+<button>Order now</button>
+```
+
+So if we do it like this then later on when we submit this form again it should then show up right with our form data as well. So let's actually try that immediately and there it is.
+
+**What about this priority field in the form?** So I think I have to actually select it here in order for it to show up and indeed there it is. So now we have priority on.
+
+So we have our raw data right in the action now but we need to model it a little bit. **So this priority should be always existent in the data that we are going to submit and it should be true or false, not this on.** And of course the cart also needs to be converted back to an object. And so let's now quickly do that in action.
+
+So let's create a new variable here called the order, and then let's start by spreading in the data and then we will just overwrite some of them.
+
+So the cart should be JSON.parse and then the priority will be data.priority and then we just check if it is equal to on. And then let's log it to the console.
+
+```jsx
+export async function action({ request }) {
+  const formData = await request.formData();
+  const data = Object.fromEntries(formData);
+  console.log(data);
+
+  const order = {
+    ...data,
+    cart: JSON.parse(data.cart),
+    priority: data.priority === "on",
+  };
+
+  console.log(order);
+
+  return null;
+}
+```
+
+Nice. So we have the data now in the shape that we want it to be. And so now we can use it to create a new order.
+
+So we already once again have an API endpoint for that inside a function right in apiRestaurant.js file. So we have the create order function which receives a new order object as an argument. So that's pretty straightforward. And so let's do createOrder and make sure that it has been correctly imported, and then we pass in the order. Now, let's just open up this createOrder function again so that I can show you that this createOrder function actually returns the newly created object. So the new order is actually returned.
+
+```jsx
+const newOrder = await createOrder(order);
+```
+
+And so the nice thing about that is that we can now await that here. So we can call this here new order and then what we will want to do is to immediately redirect the page to the order slash ID.
+
+So basically showing the user all the information about that new order. So basically what we implemented in the previous lecture.
+
+**So let's do that here but we cannot do it using the navigate function because the navigate function comes from calling the useNavigate hook but we cannot call hooks inside this function.** `So hooks can only be called inside components.` **And so here we need to use another function which is called redirect.** So this is basically, another function that is provided to us by react router which basically will just create a new response or a new request. I'm not really sure but it's also not so important.  
 What matters is that behind the scenes all of this really works with the web APIs standard request and response APIs. And so if from here we return a new response then React Router will automatically go to the URL that is contained in that new response. So again, this redirect here will actually create that response which we can see right here in this TypeScript definition. But anyway, long story short, all we have to do here is to now specify basically this new URL. So order slash and then new order dot id which will have been created on the server by the API.
 
-So again this new order that we get here is already the new object that is coming back from the API as a response of calling this function here. And so this will then already contain the ID which will then be placed here in the URL which will then fetch that new order immediately from the server and display it here. So that's again what we implemented in the previous lecture. So let's try this now again and nothing happened. So let's see here our network tab to see, well, maybe we should clear all of this and try that again.
+```jsx
+return redirect(`/order/${newOrder.id}`);
+```
 
-So just to see if any request was created and indeed it actually was and now it did work. So then we quickly saw the loader here and then we just got our brand new order. So mine is here on May 1st, but you will see exactly the date that you are on right now. And these prices here will be the same because we are all using still this fake card here, of course. Beautiful.
+So again this new order that we get here is already the new object that is coming back from the API as a response of calling this function. And so this will then already contain the ID which will then be placed in the URL which will then fetch that new order immediately from the server and display it. So that's again what we implemented in the previous lecture. So let's try this now again and yeah.. working... Beautiful.
 
-So that worked really nicely. And so once again, this is really really an amazing pattern for doing data manipulation and also for writing new data simply using these actions and react routers form component. So without writing all the boilerplate code that we used to write earlier. So where we had to create state variables for all these inputs then we had to handle the request here. We had to prevent default and really all that stuff.
+```jsx
+// CreateOrder.jsx
+// focus on action function at bottom and Form element
+import { useState } from "react";
+import { Form, redirect } from "react-router-dom";
+import { createOrder } from "../../services/apiRestaurant";
 
-But with this we kind of go back to the roots. All we do is to have a form and then we submit this form. And then since we wired up this action that we created to this URL then we catch that request right here in this action and do whatever work that we have to do. So in this case we get all the data from the form which is probably always going to be these two lines of code here which might change in the future I think but for now this is just how it works. Then we create our new order object and submit it with a post request to this create order right here.
+// https://uibakery.io/regex-library/phone-number
+const isValidPhone = (str) =>
+  /^\+?\d{1,4}?[-.\s]?\(?\d{1,3}?\)?[-.\s]?\d{1,4}[-.\s]?\d{1,4}[-.\s]?\d{1,9}$/.test(
+    str
+  );
+
+const fakeCart = [
+  {
+    pizzaId: 12,
+    name: "Mediterranean",
+    quantity: 2,
+    unitPrice: 16,
+    totalPrice: 32,
+  },
+  {
+    pizzaId: 6,
+    name: "Vegetale",
+    quantity: 1,
+    unitPrice: 13,
+    totalPrice: 13,
+  },
+  {
+    pizzaId: 11,
+    name: "Spinach and Mushroom",
+    quantity: 1,
+    unitPrice: 15,
+    totalPrice: 15,
+  },
+];
+
+function CreateOrder() {
+  // const [withPriority, setWithPriority] = useState(false);
+  const cart = fakeCart;
+
+  return (
+    <div>
+      <h2>Ready to order? Lets go!</h2>
+
+      {/* <Form method="POST" action="/order/new"> */}
+      <Form method="POST">
+        <div>
+          <label>First Name</label>
+          <input type="text" name="customer" required />
+        </div>
+
+        <div>
+          <label>Phone number</label>
+          <div>
+            <input type="tel" name="phone" required />
+          </div>
+        </div>
+
+        <div>
+          <label>Address</label>
+          <div>
+            <input type="text" name="address" required />
+          </div>
+        </div>
+
+        <div>
+          <input
+            type="checkbox"
+            name="priority"
+            id="priority"
+            // value={withPriority}
+            // onChange={(e) => setWithPriority(e.target.checked)}
+          />
+          <label htmlFor="priority">Want to yo give your order priority?</label>
+        </div>
+
+        <div>
+          <input type="hidden" name="cart" value={JSON.stringify(cart)} />
+          <button>Order now</button>
+        </div>
+      </Form>
+    </div>
+  );
+}
+
+export async function action({ request }) {
+  const formData = await request.formData();
+  const data = Object.fromEntries(formData);
+
+  const order = {
+    ...data,
+    cart: JSON.parse(data.cart),
+    priority: data.priority === "on",
+  };
+
+  const newOrder = await createOrder(order);
+
+  return redirect(`/order/${newOrder.id}`);
+}
+
+export default CreateOrder;
+
+```
+
+So that worked really nicely. And so once again, this is really really an amazing pattern for doing data manipulation and also for writing new data simply using these actions and react-routers Form component. So without writing all the boilerplate code that we used to write earlier. So where we had to create state variables for all these inputs then we had to handle the request. We had to prevent default and really all that stuff. But with this we kind of go back to the roots. All we do is to have a form and then we submit this form. And then since we wired up this action that we created to this URL then we catch that request right in the action and do whatever work that we have to do. So in this case we get all the data from the form which is probably always going to be these two lines of code here which might change in the future I think but for now this is just how it works. Then we create our new order object and submit it with a post request to this create order.
 
 So the post request is really made here. So here in this fetch request where we have this post method, this is where actually the new order is created. Alright. Then we get back that new order object and we redirect immediately to order slash the new order dot id. So the ID of this newly created order is exactly this, and for you it's going to be another one.
 
-So let's just copy this here. Let's go back to the homepage, and then we can of course paste this in here, hit enter, and then we will get exactly that order that we just created right here. So in other words, the user can now search for the order that they created. Great. So I hope that this made sense.
+So let's just copy this from url. Let's go back to the homepage, and then we can of course paste this in here, hit enter, and then we will get exactly that order that we just created right here. So in other words, the user can now search for the order that they created. Great. So I hope that this made sense.
 
 And now all we have to do in the next lecture is some error handling here.
 
 ---
 
-## ``
+## `Error Handling in Form Actions`
+
+Let's keep working on our form actions by handling some possible errors. Now before we go do that, let's actually also provide the user with some feedback while the form is submitting.
+
+So let's come back here to the form. And so what I want to do is to as we click on the submit button then disable the button. So we can do that once again using the **useNavigation** hook because remember how earlier I told you that the navigation state can either be **idle**, **loading**, or **submitting**.
+
+And so we can do something very similar to what we did. So there we showed the loading indicator whenever navigation dot state was loading. And so now we can do the same thing for navigation dot submitting, but this one let's actually do it right in this CreateOrder component. So navigation = useNavigation and then let's create a variable called const isSubmitting and then navigation dot state is equal to submitting. Alright.
+
+And so all we have to do now is to use that in JSX. So disabled whenever isSubmitting and we can also conditionally set some text here. So is submitting then let's say, placing order and otherwise then we can render order now.
+
+```jsx
+const navigation = useNavigate();
+const isSubmitting = navigation.state === "submitting";
+
+---
+
+<button disabled={isSubmitting}>
+  {isSubmitting ? "Placing order..." : "Order now"}
+</button>
+```
+
+Alright. Now, notice how here we use the required attribute in these fields. And so this is just standard HTML5 form validation. So React Router encourages us to use these whenever possible. And so with this we can now not easily submit the form without having to write any JavaScript. So we actually do have to fill in this form with something.
+
+**Great. So let's come back to the new form and work on `error handling`.** So with error handling, what I mean is that there might happen some errors while this form is being submitted.  
+So for example, the phone number might be a string, like 'abc', So this will then still pass the required, filter, but it is not in the shape that we want. So this is not a valid phone number. And so we can now check this phone number right here in our action and if it's not correct we can then, basically tell our form that there is an error right here in this field. So that sounds more confusing than it needs to be, and so let me just show you what I mean. So this is just a nice technique that we can use.
+
+So let's create simply an `errors` object in action function, and let's start with an empty object. And now let's say if is not and then we have this function right here⤵️ that I got from this URL, <https://uibakery.io/regex-library/phone-number>
+
+```jsx
+// https://uibakery.io/regex-library/phone-number
+const isValidPhone = (str) =>
+  /^\+?\d{1,4}?[-.\s]?\(?\d{1,3}?\)?[-.\s]?\d{1,4}[-.\s]?\d{1,4}[-.\s]?\d{1,9}$/.test(
+    str
+  );
+
+```
+
+So we can pass a phone number there. And so here we can say if it's not a valid phone number, so the order dot phone then we want errors dot phone to be some error message.
+
+```jsx
+const errors = {};
+
+if (!isValidPhone(order.phone))
+  errors.phone =
+    "Please give us your correct phone number. we might need it to contact you.";
+
+return redirect(`/order/${newOrder.id}`);
+
+```
+
+Alright. So this for this business is a very important piece of information And so we need to make sure that each order receives a correct phone number.  
+And now we can basically say that whenever there is at least one property in this object we want to return the errors object. So instead of returning redirect and we will then be able to get access to that data in the createOrder component.
+
+Okay? But first let's return this object in case there is at least one error. So one trick of doing that is to say if object.keys of the errors object.length is greater than 0 then return this object. And actually all of this should of course be before the new order is created. So if there are some errors here then we will return immediately and no new order is created on the server and we also don't get redirected to the other order page.
+
+```jsx
+export async function action({ request }) {
+  const formData = await request.formData();
+  const data = Object.fromEntries(formData);
+
+  const order = {
+    ...data,
+    cart: JSON.parse(data.cart),
+    priority: data.priority === "on",
+  };
+
+  const errors = {};
+
+  if (!isValidPhone(order.phone))
+    errors.phone =
+      "Please give us your correct phone number. we might need it to contact you.";
+
+  if (Object.keys(errors).length > 0) return errors;
+
+  // If no errors, create the order and redirect to the order details page
+  const newOrder = await createOrder(order);
+
+  return redirect(`/order/${newOrder.id}`);
+}
+```
+
+Alright. And so as I was saying earlier now here in this component, so the component that is wired up with this action. **So this component(CreateOrder), remember is connected with this action because we said so in the route definition in App.jsx. And so therefore in this component we can now get access to the data that is returned from that action.**
+
+So it is yet another custom hook that we are going to need in CreateOrder.jsx. And so let's call the result of this one here **formErrors** and then `useActionData` just like this.
+
+```jsx
+const formErrors = useActionData();
+```
+
+And notice that it's not called something like useActionErrors. So it's really for any data, but the most common use case of this hook is to actually do what we are doing right now. So to return some errors that we can then display right in the user interface.
+
+So, let's then display something immediately after Phone number field in Form. So here we can say form errors and then some optional chaining. So if there is basically form errors dot phone, then let's just render a paragraph with exactly that text. So with the string that is at form errors dot phone, and that's actually it.
+
+```jsx
+<div>
+  <label>Phone number</label>
+  <div>
+    <input type="tel" name="phone" required />
+  </div>
+  {formErrors?.phone && <p>{formErrors.phone}</p>}
+</div>
+```
+
+So let's try this. Beautiful. So here is our error message.
+
+***`QUICK RECAP:`***
+
+Let's just recap what just happened. So this order.phone('abc')  that we entered in form was clearly not valid. And so therefore we added the phone property to the errors object. Therefore, some errors existed which means that this error object was then returned immediately, from action function. So the new order was then not created.
+
+And so then in a component that is connected to this action, we can get access to whatever was returned from that action in case there was no submission.
+
+*I just wish that in 40 minutes from now someone would actually knock on my door and get me some pizzas because it's actually already kind of dinner time. 🫢🥰😢*  
+
+But anyway this is how we do error handling in forms using this technique that I just showed you. So basically returning something from the action and then receiving that in component in order to display an error message.
+
+`And with this we actually wrap up this initial React Router data loading section. So at this point we know how we can fetch data using loaders and how we can write data using actions. So these are the two most important concepts in the new and modern React router.`
+
+So make sure that you understand everything that we did here and then moving on it is time to finally apply some styling to this year. And so hopefully I see you soon in our tailwind CSS crash course section.
+
+---
+
+***`22 / 12 / 2024`***
+***`Flat (Double Road RWP)`***
 
 ---
