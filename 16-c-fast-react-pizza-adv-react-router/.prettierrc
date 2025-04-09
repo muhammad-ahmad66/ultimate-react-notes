@@ -1,0 +1,5 @@
+{
+  "tailwindStylesheet": "./resources/css/app.css",
+
+  "singleQuote": true
+}
